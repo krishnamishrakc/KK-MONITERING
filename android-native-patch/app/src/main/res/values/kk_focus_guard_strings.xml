@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kk_focus_guard_description">Checks the foreground app package name to enforce the focus blocks and limits you selected in KK Monitoring. It does not read screen text.</string>
+</resources>

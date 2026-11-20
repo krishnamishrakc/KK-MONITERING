@@ -1,0 +1,9 @@
+{
+  "appId": "com.kkcreation.studytrack",
+  "appName": "KK Monitoring",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

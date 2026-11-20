@@ -1,0 +1,6 @@
+// Merge these imports and registration call into your EXISTING MainActivity.kt.
+// Do not replace your existing MainActivity class blindly; it may contain other plugins.
+import com.kkcreation.studytrack.KKWellnessPlugin
+
+// Inside class MainActivity : BridgeActivity(), before super.onCreate(savedInstanceState):
+registerPlugin(KKWellnessPlugin::class.java)

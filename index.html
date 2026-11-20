@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>KK's MONITORING | Study Command Center</title>
+    <link rel="stylesheet" href="app.css?v=70">
+    <link rel="stylesheet" href="android-theme.css?v=1">
+    <script defer src="android-shell.js?v=1"></script>
+    <script defer src="digital-wellness.js?v=1"></script>
+    <script defer src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="dark-theme">
+
+<!-- 🍎 iPhone Style Animated Glass Background 🍎 -->
+<div class="apple-ambient-bg">
+    <div class="apple-orb apple-orb-1"></div>
+    <div class="apple-orb apple-orb-2"></div>
+    <div class="apple-orb apple-orb-3"></div>
+</div>
+<div class="effect-overlay"></div>
+
+
+    <div id="authOverlay" class="password-overlay wallpaper-lock-screen" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+        <section class="lock-screen-card">
+            <div class="lock-brand"><i class="ph-fill ph-crosshair"></i><span>KK'S MONITORING</span></div>
+            <span class="lock-eyebrow">PERSONAL STUDY SPACE</span>
+            <h2 id="lockTitle">Welcome back</h2>
+            <p class="lock-copy">Your study dashboard is ready. Enter your PIN to continue.</p>
+            <label class="lock-pin-label" for="sysPassword">4-DIGIT APP PIN</label>
+            <input type="password" id="sysPassword" class="modern-input lock-pin-input" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="current-password" aria-describedby="pwdError">
+            <button type="button" id="unlockBtn" class="btn-primary glow-btn lock-unlock-button"><i class="ph-bold ph-lock-open"></i> Unlock App</button>
+            <p id="pwdError" class="text-danger lock-error" role="alert" style="display:none;">Incorrect PIN. Please try again.</p>
+            <span class="lock-footnote"><i class="ph-fill ph-shield-check"></i> Your progress stays on this device and in your connected cloud account.</span>
+        </section>
+    </div>
+
+    <script>
+        (() => {
+          'use strict';
+          const SESSION_KEY = 'kkUnlocked_v65';
+          const overlay = document.getElementById('authOverlay');
+          const input = document.getElementById('sysPassword');
+          const button = document.getElementById('unlockBtn');
+          const error = document.getElementById('pwdError');
+          const expectedPin = () => localStorage.getItem('kkMonitoringPin') || '1204';
+
+          // Always start locked for a fresh file/version; old session flags are ignored.
+          try {
+            sessionStorage.removeItem('kkUnlocked');
+            sessionStorage.removeItem('kkUnlocked_v50');
+            sessionStorage.removeItem('kkUnlocked_v48');
+            sessionStorage.removeItem('kkUnlocked_v57');
+            sessionStorage.removeItem('kkUnlocked_v58');
+            sessionStorage.removeItem(SESSION_KEY);
+          } catch (_) {}
+          document.body.classList.add('app-locked');
+          overlay.style.display = 'flex';
+
+          let unlocking = false;
+          async function unlockSystem() {
+            if (unlocking) return;
+            unlocking = true;
+            error.style.display = 'none';
+            button.disabled = true;
+            const value = String(input.value || '').trim();
+            if (value !== expectedPin()) {
+              error.style.display = 'block';
+              button.disabled = false;
+              unlocking = false;
+              input.focus();
+              input.select();
+              return;
+            }
+
+            // Hide the overlay FIRST. Never wait for JS/network work before unlocking the UI.
+            try { sessionStorage.setItem(SESSION_KEY, 'true'); } catch (_) {}
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('app-locked');
+            window.dispatchEvent(new Event('kk:unlocked'));
+
+            // Start application code only after the click has completed.
+            try { await window.__kkLoadAppAfterUnlock?.(); } catch (e) { console.error('Post-unlock boot failed', e); }
+            unlocking = false;
+          }
+
+          // Use both native listeners and the function name for compatibility with old inline calls.
+          window.unlockSystem = unlockSystem;
+          button.addEventListener('click', unlockSystem, { passive: true });
+          input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              unlockSystem();
+            }
+          });
+          // Do not intercept overlay clicks in capture phase: that would prevent the target button from receiving the click.
+          input.focus();
+        })();
+      </script>
+
+    <div class="bg-orb orb-1"></div><div class="bg-orb orb-2"></div><div class="bg-orb orb-3"></div>
+
+    <div class="app-container">
+        <nav class="sidebar glass-panel" aria-label="Primary navigation"><div class="logo"><i class="ph-fill ph-crosshair logo-icon text-gradient"></i><h2>KK's<br><span class="text-gradient" style="font-size:1.2rem;">MONITORING</span></h2><div class="kk-sidebar-dock" id="kkSidebarDock" aria-label="Workspace controls"><button type="button" class="kk-sidebar-btn" data-sidebar-action="compact" aria-label="Toggle compact menu" title="Toggle compact menu"><i class="ph ph-sidebar-simple"></i></button><button type="button" class="kk-sidebar-btn" data-sidebar-action="lock" aria-label="Lock menu layout" title="Lock current menu layout"><i class="ph ph-lock-open"></i></button><button class="btn-icon" id="v42ThemeBtn" title="Toggle theme" aria-label="Toggle theme"><i class="ph ph-moon"></i></button></div></div><div class="nav-scroll"><div class="nav-section-label">COMMAND</div><ul class="nav-links"><li class="active" data-tab="view-dashboard"><i class="ph ph-house"></i><span>Today</span></li><li data-tab="view-study-room"><i class="ph ph-timer"></i><span>Focus & Study Room</span></li><li data-tab="view-daily-tasks"><i class="ph ph-list-checks"></i><span>Daily Plan</span></li><li data-tab="view-tracker"><i class="ph ph-table"></i><span>Excel Tracker</span></li><li data-tab="view-add-data"><i class="ph ph-file-plus"></i><span>Mock Tracker</span></li><li data-tab="view-analytics"><i class="ph ph-chart-line-up"></i><span>Deep Analytics</span></li><li data-tab="view-wellness"><i class="ph ph-device-mobile"></i><span>Digital Wellness</span></li><li class="nav-action" id="navBrainGym"><i class="ph ph-brain"></i><span>Brain Gym</span><b>10m</b></li></ul><div class="nav-section-label">LEARN</div><ul class="nav-links nav-learn"><li data-tab="view-learn"><i class="ph ph-books"></i><span>Learn Hub</span></li></ul><div class="nav-section-label">SYSTEM</div><ul class="nav-links nav-system"><li data-tab="view-settings"><i class="ph ph-gear"></i><span>Settings</span></li></ul></div><div class="sidebar-footer"><span class="status-dot"></span><span>Personal study system</span></div></nav>
+
+        <main class="main-content">
+            <header class="top-header glass-panel"><div class="header-info"><div class="v42-kicker">PERSONAL STUDY OPERATING SYSTEM</div><h1>Study Command Center</h1><p>Plan · Focus · Track · Improve</p></div><div class="header-actions"><div class="v42-mini-clock"><strong id="v42LiveTime">--:--:--</strong><small id="v42LiveDate">Loading…</small></div><div class="v42-cloud-pill offline" id="v42Cloud"><span></span><b>Local mode</b></div></div></header>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active"><div class="cc-welcome"><div><span class="cc-eyebrow">TODAY</span><h2>Make today count.</h2><p id="ccQuote">“Discipline beats motivation.”</p></div><div class="cc-actions"><button class="cc-primary" id="ccStartFocus"><i class="ph-fill ph-play-circle"></i> Start Focus</button><button class="cc-secondary" id="ccBrainGym"><i class="ph-fill ph-brain"></i> Brain Gym <span>10m</span></button></div></div><section class="cc-grid"></section>
+<section class="cc-grid cc-grid-top"><article class="cc-card clock-card"><div class="cc-label">LOCAL TIME</div><strong id="ccBigClock">--:--:--</strong><span id="ccBigDate">Loading…</span><div class="cc-status" id="ccCloudStatus"><i></i> Cloud checking…</div></article><article class="cc-card mission-card"><div class="cc-card-head"><div><div class="cc-label">TODAY'S MISSION</div><h3 id="ccTaskPct">0%</h3></div><span id="ccTaskMeta">0 / 0 tasks</span></div><div class="cc-progress"><i id="ccTaskBar"></i></div><p id="ccTaskRemain">0 tasks remaining</p><button class="cc-link" data-tab="view-daily-tasks">Open Daily Plan →</button></article></section>
+<section class="kw-today-card" id="kwTodayCard" aria-label="Digital wellness overview">
+  <div class="kw-today-head"><div><span class="kw-eyebrow">DIGITAL WELLNESS</span><h3>Phone usage, with purpose</h3><p id="kwTodayStatus">Connect Android Usage Access to see today's report.</p></div><button type="button" class="kw-link-btn" data-tab="view-wellness">View details <span aria-hidden="true">↗</span></button></div>
+  <div class="kw-today-metrics">
+    <div><span>Screen active</span><strong id="kwTodayScreen">—</strong></div>
+    <div><span>Study apps</span><strong id="kwTodayStudy">—</strong></div>
+    <div><span>Distraction</span><strong id="kwTodayDistraction">—</strong></div>
+  </div>
+  <div class="kw-score-row"><div class="kw-score-ring" id="kwTodayScoreRing"><strong id="kwTodayScore">—</strong><small>/100</small></div><div><b>Productivity score</b><p id="kwTodayScoreHint">Score combines study time, mock performance, consistency and digital wellness.</p></div></div>
+</section>
+<section class="cc-grid cc-grid-mid"><article class="cc-card next-card"><div class="cc-label">NEXT ACTION</div><h3 id="ccNextAction">Plan your next study block</h3><p id="ccNextSub">Open Daily Plan to choose your next task.</p><button class="cc-primary small" id="ccNextBtn">Open Plan</button></article><article class="cc-card xp-card"><div class="cc-card-head"><div><div class="cc-label">CONSISTENCY ENGINE</div><h3>🏆 Study XP</h3></div><strong id="ccLevel">LEVEL 1</strong></div><div class="cc-xp-row"><b id="ccXP">0 XP</b><span id="ccTodayXP">+0 today</span></div><div class="cc-progress"><i id="ccXPBar"></i></div><small id="ccXPNext">0 / 100 to next level</small></article><article class="cc-card load-card"><div class="cc-label">MENTAL LOAD</div><div class="cc-load"><strong id="ccLoadState">LOW</strong><span id="ccLoadScore">0</span>/100</div><div class="cc-load-bar"><i id="ccLoadBar"></i></div><p id="ccLoadText">Fresh start. Good time for difficult topics.</p></article></section><section class="cc-grid cc-grid-bottom"><article class="cc-card graph-card"><div class="cc-card-head"><div><div class="cc-label">PERFORMANCE</div><h3>Focus Time · 7 Days</h3></div></div><canvas id="ccFocusChart"></canvas></article><article class="cc-card graph-card"><div class="cc-card-head"><div><div class="cc-label">CONSISTENCY</div><h3>Tasks · 7 Days</h3></div></div><canvas id="ccTaskChart"></canvas></article><article class="cc-card graph-card"><div class="cc-card-head"><div><div class="cc-label">PROGRESSION</div><h3>XP · 7 Days</h3></div></div><canvas id="ccXPChart"></canvas></article><article class="cc-card graph-card"><div class="cc-card-head"><div><div class="cc-label">BALANCE</div><h3>Focus vs Waste</h3></div></div><canvas id="ccBalanceChart"></canvas></article></section><section class="cc-strip"><div><b>📚 Vocabulary</b><span>Open Learn → Vocabulary</span></div><div><b>📜 120 Rules</b><span>Open Learn → 120 Rules</span></div><div><b>📝 Mocks</b><span id="ccMockHint">0 recorded</span></div><div><b>☁ Cloud</b><span id="ccCloudHint">Checking…</span></div></section><div id="ccCompat" aria-hidden="true"><div id="cdForm" class="hidden"><input id="cdName"><input id="cdDate"></div><div id="activeCountdowns"></div><div id="dashboardStickyNotes"></div><h4 id="gRuleTitle"></h4><p id="gRuleText"></p><p id="gRuleExample"></p><h3 id="vWord"></h3><span id="vPos"></span><p id="vHindi"></p><p id="vMeaning"></p><p id="vExample"></p><span id="kpiTotal"></span><span id="kpiBest"></span><span id="kpiAcc"></span><span id="kpiAvg"></span></div></div>
+
+<div id="view-learn" class="view-section"><div class="learn-hub"><div class="cc-welcome"><div><span class="cc-eyebrow">LEARN</span><h2>Vocabulary & 120 Rules</h2><p>Quick revision without cluttering the Today dashboard.</p></div></div><div class="learn-grid"><article class="learn-card"><div class="learn-head"><div><span class="cc-label">120 GRAMMAR RULES</span><h3 id="learnRuleTitle">Rule loading…</h3></div><div><button class="cc-ghost" id="learnRulePrev">← Prev</button><button class="cc-ghost" id="learnRuleNext">Next →</button></div></div><p id="learnRuleText"></p><div id="learnRuleExample" class="learn-example"></div><div class="learn-actions"><button class="cc-secondary" id="learnRuleGo">Mark / Review in Rules</button></div></article><article class="learn-card"><div class="learn-head"><div><span class="cc-label">VOCABULARY</span><h3 id="learnWord">Word loading…</h3><span id="learnPos" class="learn-pos"></span></div><div><button class="cc-ghost" id="learnVPrev">← Prev</button><button class="cc-ghost" id="learnVNext">Next →</button></div></div><div id="learnHindi" class="learn-hindi"></div><p id="learnMeaning"></p><div id="learnVExample" class="learn-example"></div><div class="learn-online"><button class="cc-secondary" id="learnOnlineBtn"><i class="ph ph-globe"></i> Find meaning online</button><span>Only searches when requested.</span></div><div id="learnOnlineResult" class="learn-online-result" hidden></div></article></div></div>
+
+</div>
+
+<!-- TAB 2: DAILY TARGETS & QUIZ -->
+            <div id="view-daily-tasks" class="view-section">
+                <div class="glass-panel hover-lift" style="padding:30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 class="text-emerald"><i class="ph-fill ph-rocket-launch"></i> Daily 20 Speed Maths Quiz</h3>
+                        <div style="display:flex; gap: 15px; align-items:center;">
+                            <span class="glass-card" style="padding: 8px 16px; font-family:monospace; font-weight:bold; color:var(--neon-orange); font-size: 1.2rem;"><i class="ph-bold ph-timer"></i> <span id="quizTimerDisplay">05:00.00</span></span>
+                            <span class="glass-card" style="padding: 8px 16px; font-weight:bold; color:var(--text-main);">Score: <span id="quizScore" class="text-emerald">0</span>/20</span>
+                        </div>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Tables (10-25), Squares (2-30), Cubes (1-15). 0ms delay between questions!</p>
+                    
+                    <div id="quizContainer" style="text-align: center; background: rgba(0,0,0,0.2); padding: 30px; border-radius: 16px; border: 1px dashed var(--neon-blue);">
+                        <button class="btn-primary glow-btn" style="font-size:1.2rem; padding: 15px 30px;" onclick="startSpeedQuiz()"><i class="ph-bold ph-play"></i> Start Quiz Now</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel hover-lift" style="padding:30px; margin-top:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                        <div>
+                            <h2 class="text-gradient">📋 To-Do List</h2>
+                            <p style="color:var(--text-muted); margin-top:5px;">Daily randomized plan · 8:00 AM – 8:30 PM · Lunch 1:00–3:00 PM · Walk 6:00–6:30 PM</p>
+                        </div>
+                        <div class="streak-badge glass-card" style="padding: 12px 24px; font-weight: 800; font-size:1.3rem; display:flex; align-items:center; gap:8px; border-color:var(--neon-orange);">
+                            <i class="ph-fill ph-fire text-orange"></i> Streak: <span id="taskStreak" class="text-gradient">0</span> Days
+                        </div>
+                    </div>
+                    <div class="hourly-todo-list" id="todoListContainer"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: STUDY ROOM & VAULT -->
+            <div id="view-study-room" class="view-section">
+                <!-- Session Timers -->
+                <div class="glass-panel hover-lift" style="padding:30px;">
+                    <div class="study-session-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border-glass); padding-bottom:15px;">
+                        <div><h2 class="text-gradient"><i class="ph-fill ph-play-circle"></i> Active Study Session</h2></div>
+                        <div class="study-session-controls" style="display:flex; align-items:center; gap:15px;">
+                            <h1 id="sessionTimeDisplay" style="font-size:2.5rem; font-weight:800; color:var(--neon-blue); font-family:monospace;">00:00:00</h1>
+                            <button id="btnSessionStart" class="btn-primary glow-btn" onclick="startSession()"><i class="ph-bold ph-sign-in"></i> Start Session</button>
+                            <button id="btnSessionEnd" class="btn-danger" onclick="endSession()" disabled><i class="ph-bold ph-sign-out"></i> End Session</button><button id="btnSessionReset" class="btn-secondary timer-reset-btn" onclick="resetSessionTimer()" title="Reset session timer"><i class="ph-bold ph-arrow-counter-clockwise"></i> Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="study-timer-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                        <div class="glass-card timer-box" style="border-color: var(--neon-emerald);">
+                            <h3 class="text-emerald"><i class="ph-fill ph-target"></i> Focus Study Timer</h3>
+                            <select id="focusSubject" class="modern-input" style="margin: 15px 0;">
+                                <option value="Quants">Quants (Maths)</option>
+                                <option value="Reasoning">Reasoning</option>
+                                <option value="English">English</option>
+                                <option value="Mock & Analysis">Mock & Analysis</option>
+                            </select>
+                            <h1 id="focusTimerDisplay" class="text-emerald timer-text">00:00:00</h1>
+                            <div class="timer-actions" style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                                <button class="btn-primary" onclick="toggleFocusTimer()" id="btnFocus"><i class="ph-fill ph-play"></i> Start</button>
+                                <button class="btn-secondary" onclick="submitFocusTimer()"><i class="ph-fill ph-paper-plane-tilt"></i> Submit</button><button class="btn-secondary timer-reset-btn" onclick="resetFocusTimer()" title="Reset focus timer"><i class="ph-bold ph-arrow-counter-clockwise"></i> Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-card timer-box" style="border-color: var(--danger); background:rgba(239, 68, 68, 0.05);">
+                            <h3 class="text-danger"><i class="ph-fill ph-warning-circle"></i> Time Waste Tracker</h3>
+                            <input type="text" id="wasteNote" class="modern-input" placeholder="Reason (e.g. Insta, YouTube)" style="margin: 15px 0;">
+                            <h1 id="wasteTimerDisplay" class="text-danger timer-text">00:00:00</h1>
+                            <div class="timer-actions" style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                                <button class="btn-danger" onclick="toggleWasteTimer()" id="btnWaste" style="background:var(--danger); color:#fff;"><i class="ph-fill ph-play"></i> Start</button>
+                                <button class="btn-secondary" onclick="submitWasteTimer()"><i class="ph-fill ph-paper-plane-tilt"></i> Submit</button><button class="btn-secondary timer-reset-btn" onclick="resetWasteTimer()" title="Reset waste timer"><i class="ph-bold ph-arrow-counter-clockwise"></i> Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMART VAULT -->
+                <div class="glass-panel hover-lift" style="padding:30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-glass); padding-bottom:15px;">
+                        <h3 class="text-blue"><i class="ph-fill ph-folder-open"></i> Smart Vault & Notes</h3>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-secondary" onclick="openCheatSheet()"><i class="ph-bold ph-math-operations"></i> Cheat Sheet & Rules</button>
+                            <button class="btn-secondary" onclick="openCalculator()"><i class="ph-bold ph-calculator"></i> Smart Calculator</button>
+                            <button class="btn-primary" onclick="createNewFolder()"><i class="ph-bold ph-folder-plus"></i> New Folder</button>
+                        </div>
+                    </div>
+                    <div id="vaultBreadcrumb" style="margin-top:15px; font-weight:600; color:var(--neon-blue); display:none; cursor:pointer;" onclick="renderVaultFolders(null)"><i class="ph-bold ph-arrow-left"></i> Back to Main Vault</div>
+                    <div id="vaultFolders" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-top: 20px;"></div>
+                </div>
+
+                <!-- SCHOOL ATTENDANCE REGISTER -->
+                <div class="glass-panel hover-lift" style="padding:30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3 class="text-emerald"><i class="ph-fill ph-calendar-check"></i> Monthly Attendance Register</h3>
+                        <button class="btn-primary" onclick="markAttendance()"><i class="ph-bold ph-check-circle"></i> Mark Present Today</button>
+                    </div>
+                    
+                    <div class="calendar-wrapper">
+                        <!-- Left Calendar -->
+                        <div class="calendar-main">
+                            <div class="calendar-header-grid">
+                                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                            </div>
+                            <div class="calendar-grid" id="calendarGrid"></div>
+                        </div>
+                        <!-- Right Stats Cards -->
+                        <div class="calendar-stats">
+                            <div class="cal-stat-card" style="border-left: 4px solid var(--neon-emerald);">
+                                <div class="cal-stat-title">THIS MONTH PRESENT</div>
+                                <div class="cal-stat-val text-emerald" id="monthPresent">0</div>
+                            </div>
+                            <div class="cal-stat-card" style="border-left: 4px solid var(--danger);">
+                                <div class="cal-stat-title">THIS MONTH ABSENT</div>
+                                <div class="cal-stat-val text-danger" id="monthAbsent">0</div>
+                            </div>
+                            <div class="cal-stat-card" style="border-left: 4px solid var(--neon-blue);">
+                                <div class="cal-stat-title">THIS YEAR PRESENT</div>
+                                <div class="cal-stat-val text-blue" id="yearPresent">0</div>
+                            </div>
+                            <div class="cal-stat-card" style="border-left: 4px solid var(--neon-orange);">
+                                <div class="cal-stat-title">THIS YEAR ABSENT</div>
+                                <div class="cal-stat-val text-orange" id="yearAbsent">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: ADD MOCK DATA -->
+            <div id="view-add-data" class="view-section">
+                <div class="glass-panel hover-lift mock-entry-panel">
+                    <div class="mock-entry-heading">
+                        <div><span class="mock-form-eyebrow">PERFORMANCE LOG</span><h2 class="text-gradient" id="mockFormTitle">Add Mock Test Performance</h2><p>Enter right and wrong answers. Net marks use 0.25 negative marking.</p></div>
+                        <div class="mock-type-toggle glass-card">
+                            <button type="button" id="btnFull" class="btn-primary" style="padding:8px 15px;" onclick="setMockType('full')">Full Mock</button>
+                            <button type="button" id="btnSec" class="btn-secondary" style="padding:8px 15px;" onclick="setMockType('sectional')">Sectional</button>
+                        </div>
+                    </div>
+
+                    <form id="mockForm" class="mock-entry-form" onsubmit="return handleMockSubmit(event)" novalidate>
+                        <input type="hidden" id="editingMockId" value="">
+                        
+                        <div class="form-grid-4">
+                            <div class="input-group"><label>Date</label><input type="date" id="mockDate" class="modern-input" required></div>
+                            <div class="input-group">
+                                <label>Exam Type</label>
+                                <select id="mockExamType" class="modern-input" required>
+                                    <option value="SBI PO">SBI PO</option><option value="IBPS PO">IBPS PO</option>
+                                    <option value="SBI Clerk">SBI Clerk</option><option value="IBPS Clerk">IBPS Clerk</option>
+                                    <option value="IBPS RRB PO">IBPS RRB PO</option><option value="IBPS RRB Clerk">IBPS RRB Clerk</option>
+                                </select>
+                            </div>
+                            <div class="input-group"><label>Platform / Details <small>Optional</small></label><input type="text" id="mockPlatform" class="modern-input" placeholder="e.g. Testbook"></div>
+                            <div class="input-group"><label>Target Marks <small>Optional</small></label><input type="number" id="mockTarget" class="modern-input" placeholder="e.g. 70" min="0" step="0.5"></div>
+                        </div>
+
+                        <div id="sectionalSelector" class="hidden glass-card mock-sectional-selector">
+                            <h4 class="text-blue">Select subject for this sectional mock</h4>
+                            <select id="secSubject" class="modern-input">
+                                <option value="english">English Language</option><option value="quant">Quantitative Aptitude</option><option value="reasoning">Reasoning Ability</option>
+                            </select>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="subject-entry-card bg-english" id="card-english">
+                                <h3><span class="text-emerald">English</span> <span class="max-marks-badge">Max: <span id="engMax">30</span></span></h3>
+                                <div class="entry-inputs">
+                                    <div><label>Right <i class="ph-bold ph-check text-emerald"></i></label><input type="number" id="engR" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                    <div><label>Wrong <i class="ph-bold ph-x text-danger"></i></label><input type="number" id="engW" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                </div>
+                                <div class="auto-stats"><span>Att: <b id="engAtt">0</b></span> <span>Acc: <b id="engAcc">0%</b></span> <span class="good">Marks: <b id="engMarks">0.00</b></span></div>
+                            </div>
+                            <div class="subject-entry-card bg-quants" id="card-quant">
+                                <h3><span class="text-blue" id="quaName">Quants</span> <span class="max-marks-badge">Max: <span id="quaMax">35</span></span></h3>
+                                <div class="entry-inputs">
+                                    <div><label>Right <i class="ph-bold ph-check text-emerald"></i></label><input type="number" id="quaR" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                    <div><label>Wrong <i class="ph-bold ph-x text-danger"></i></label><input type="number" id="quaW" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                </div>
+                                <div class="auto-stats"><span>Att: <b id="quaAtt">0</b></span> <span>Acc: <b id="quaAcc">0%</b></span> <span class="good">Marks: <b id="quaMarks">0.00</b></span></div>
+                            </div>
+                            <div class="subject-entry-card bg-reasoning" id="card-reasoning">
+                                <h3><span class="text-orange">Reasoning</span> <span class="max-marks-badge">Max: <span id="reaMax">35</span></span></h3>
+                                <div class="entry-inputs">
+                                    <div><label>Right <i class="ph-bold ph-check text-emerald"></i></label><input type="number" id="reaR" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                    <div><label>Wrong <i class="ph-bold ph-x text-danger"></i></label><input type="number" id="reaW" class="modern-input" min="0" step="1" inputmode="numeric"></div>
+                                </div>
+                                <div class="auto-stats"><span>Att: <b id="reaAtt">0</b></span> <span>Acc: <b id="reaAcc">0%</b></span> <span class="good">Marks: <b id="reaMarks">0.00</b></span></div>
+                            </div>
+                        </div>
+
+                        <div class="overall-preview glass-card mock-overall-preview">
+                            <div class="input-group mock-percentile-input"><label>Percentile (%ile)</label><input type="number" id="mockPercentile" class="modern-input" step="0.01" min="0" max="100" placeholder="e.g. 65.5"></div>
+                            <div style="text-align:center;">Overall Attempted<br><h3 id="totAtt">0</h3></div>
+                            <div style="text-align:center;">Overall Accuracy<br><h3 id="totAcc" class="text-purple">0%</h3></div>
+                            <div style="text-align:right;">Grand Total Marks<br><div class="text-gradient" style="font-size: 2rem; font-weight: 800;"><span id="totMarks">0.00</span> <span style="font-size:1.2rem; color:var(--text-muted);">/ <span id="grandMax">100</span></span></div></div>
+                        </div>
+
+                        <button type="submit" id="btnSaveMock" class="btn-primary glow-btn mock-save-button">
+                            <i class="ph-fill ph-floppy-disk"></i> Save & Analyze Performance
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 5: DEEP ANALYTICS -->
+            <div id="view-analytics" class="view-section">
+                <div class="glass-panel" style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
+                    <h3><i class="ph-fill ph-chart-bar text-blue"></i> Analytics Filter</h3>
+                    <div style="display:flex; gap:10px;">
+                        <select id="analyticsFilter" class="modern-input" style="width:200px;" onchange="renderCharts()">
+                            <option value="All">All Exams</option><option value="SBI PO">SBI PO</option><option value="IBPS PO">IBPS PO</option><option value="SBI Clerk">SBI Clerk</option><option value="IBPS Clerk">IBPS Clerk</option><option value="IBPS RRB PO">IBPS RRB PO</option><option value="IBPS RRB Clerk">IBPS RRB Clerk</option>
+                        </select>
+                        <select id="analyticsTypeFilter" class="modern-input" style="width:180px;" onchange="renderCharts()">
+                            <option value="All">Full & Sectional</option><option value="full">Full Mock Only</option><option value="sectional">Sectional Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <section class="lifetime-mock-card glass-panel" aria-labelledby="lifetimeMockTitle">
+                    <div class="lifetime-mock-heading">
+                        <div><span class="cc-label">ALL-TIME PERFORMANCE</span><h3 id="lifetimeMockTitle"><i class="ph-fill ph-chart-donut text-blue"></i> Lifetime Mock Intelligence</h3><p>Every saved full and sectional mock, across all exams.</p></div>
+                        <span class="lifetime-live-badge"><i></i> LIVE SUMMARY</span>
+                    </div>
+                    <div class="lifetime-kpi-grid">
+                        <article><span>Total lifetime mocks</span><strong id="lifeMocksTotal">0</strong></article>
+                        <article><span>Questions attempted</span><strong id="lifeQuestionsAttempted">0</strong></article>
+                        <article><span>Average mock score</span><strong id="lifeAvgScore">0.0%</strong></article>
+                        <article><span>Overall accuracy</span><strong id="lifeOverallAccuracy">0.0%</strong></article>
+                    </div>
+                    <div class="lifetime-detail-grid">
+                        <div class="lifetime-subject-table">
+                            <div class="lifetime-table-title">Subject-wise lifetime attempts</div>
+                            <div class="lifetime-subject-row"><b>English</b><span><strong id="lifeEnglishAttempted">0</strong> attempted</span><span class="good">✓ <strong id="lifeEnglishCorrect">0</strong></span><span class="bad">✕ <strong id="lifeEnglishWrong">0</strong></span><span id="lifeEnglishAccuracy">0.0%</span></div>
+                            <div class="lifetime-subject-row"><b>Quant</b><span><strong id="lifeQuantAttempted">0</strong> attempted</span><span class="good">✓ <strong id="lifeQuantCorrect">0</strong></span><span class="bad">✕ <strong id="lifeQuantWrong">0</strong></span><span id="lifeQuantAccuracy">0.0%</span></div>
+                            <div class="lifetime-subject-row"><b>Reasoning</b><span><strong id="lifeReasoningAttempted">0</strong> attempted</span><span class="good">✓ <strong id="lifeReasoningCorrect">0</strong></span><span class="bad">✕ <strong id="lifeReasoningWrong">0</strong></span><span id="lifeReasoningAccuracy">0.0%</span></div>
+                        </div>
+                        <div class="lifetime-mistake-panel">
+                            <div><span>Most wrong mock subject</span><strong id="lifeMostWrongSubject">No wrong answers recorded</strong></div>
+                            <div><span>Total wrong mock answers</span><strong id="lifeTotalWrong">0</strong></div>
+                            <div><span>Most missed quiz question type</span><strong id="lifeQuizMistakeType">New quiz data will build this insight</strong></div>
+                            <small>Question-type insights are collected from the new exam-style Speed Maths quizzes. Mock records only identify subjects, not individual question topics.</small>
+                        </div>
+                    </div>
+                </section>
+
+                <h3 style="margin-top: 30px;"><i class="ph-fill ph-rocket-launch text-emerald"></i> Speed Maths Quiz Analytics</h3>
+                <div class="kpi-grid" style="margin-top: 15px; margin-bottom: 20px;">
+                    <div class="kpi-card glass-panel hover-lift"><div class="kpi-icon-wrapper blue-glow"><i class="ph-fill ph-hash"></i></div><div><p>Total Quizzes</p><h2 id="kpiQuizTotal">0</h2></div></div>
+                    <div class="kpi-card glass-panel hover-lift"><div class="kpi-icon-wrapper emerald-glow"><i class="ph-fill ph-check-circle"></i></div><div><p>Avg Score</p><h2 id="kpiQuizAvgScore">0.0</h2></div></div>
+                    <div class="kpi-card glass-panel hover-lift"><div class="kpi-icon-wrapper orange-glow"><i class="ph-fill ph-clock"></i></div><div><p>Avg Time</p><h2 id="kpiQuizAvgTime">00:00</h2></div></div>
+                    <div class="kpi-card glass-panel hover-lift" style="background:rgba(239, 68, 68, 0.05);"><div class="kpi-icon-wrapper" style="background:rgba(239, 68, 68, 0.15); color:var(--danger);"><i class="ph-fill ph-x-circle"></i></div><div><p>Total Mistakes</p><h2 id="kpiQuizTotalWrong" class="text-danger">0</h2></div></div>
+                </div>
+
+                <div class="charts-wrapper">
+                    <div class="chart-box glass-panel hover-lift" style="grid-column: span 2;"><h3>⚡ Speed Maths Progress (Score vs Time)</h3><div class="canvas-container"><canvas id="chartQuizProgress"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>📈 Target vs Actual Score</h3><div class="canvas-container"><canvas id="chartTargetActual"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>🎯 3-Subject Radar</h3><div class="canvas-container"><canvas id="chartRadarSubjects"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>🚀 Percentile Progress Trend</h3><div class="canvas-container"><canvas id="chartPercentileTrend"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>🎯 Accuracy Progress Trend (%)</h3><div class="canvas-container"><canvas id="chartAccuracyTrend"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>⏱️ Daily Session Sitting Duration</h3><div class="canvas-container"><canvas id="chartSessionDuration"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift" style="grid-column: span 2;"><h3>📊 Subject-Wise Right vs Wrong</h3><div class="canvas-container"><canvas id="chartSubjectRightWrong"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>📊 Score Percentage Trend</h3><div class="canvas-container"><canvas id="chartScorePct"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>🎯 Subject Accuracy</h3><div class="canvas-container"><canvas id="chartSubjectAccuracy"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>⚖️ Attempts vs Accuracy</h3><div class="canvas-container"><canvas id="chartAttemptsAccuracy"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>📚 Study Time by Subject</h3><div class="canvas-container"><canvas id="chartStudySubjects"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>🧾 Mocks by Exam</h3><div class="canvas-container"><canvas id="chartMocksByExam"></canvas></div></div>
+                    <div class="chart-box glass-panel hover-lift"><h3>❌ Wrong vs Unattempted</h3><div class="canvas-container"><canvas id="chartWrongUnattempted"></canvas></div></div>
+                </div>
+            </div>
+
+            <!-- TAB 6: SETTINGS -->
+            <div id="view-wellness" class="view-section kw-wellness-view">
+  <section class="kw-page-hero"><div><span class="kw-eyebrow">PERSONAL DIGITAL HABITS</span><h2>Digital Wellness</h2><p>Understand your phone time, protect focus and turn patterns into practical next steps.</p></div><button type="button" class="kw-primary-btn" id="kwRefreshUsage"><i class="ph ph-arrows-clockwise"></i> Refresh usage</button></section>
+  <section class="kw-permission-card" id="kwUsagePermissionCard">
+    <div class="kw-permission-icon"><i class="ph ph-shield-check"></i></div><div class="kw-permission-copy"><b>Connect Android usage data</b><p>KK Monitoring reads app foreground time and screen-interactive time only after you enable Usage Access in Android Settings. It does not read message content, browser pages or keystrokes.</p></div><button type="button" class="kw-secondary-btn" id="kwGrantUsage">Enable Usage Access</button>
+  </section>
+  <section class="kw-metric-grid">
+    <article class="kw-metric-card kw-featured"><span>SCREEN ACTIVE TODAY</span><strong id="kwScreenTime">—</strong><small id="kwScreenHint">Android Usage Access required</small></article>
+    <article class="kw-metric-card"><span>STUDY APPS</span><strong id="kwStudyTime">—</strong><small id="kwStudyHint">Categorised app time</small></article>
+    <article class="kw-metric-card"><span>DISTRACTION</span><strong id="kwDistractionTime">—</strong><small id="kwDistractionHint">Apps you mark as distraction</small></article>
+    <article class="kw-metric-card"><span>OTHER / MIXED</span><strong id="kwMixedTime">—</strong><small>Keep mixed-use apps honest</small></article>
+  </section>
+  <section class="kw-section-card"><div class="kw-section-head"><div><span class="kw-eyebrow">LAST SEVEN DAYS</span><h3>Usage rhythm</h3></div><span class="kw-chip" id="kwWeekTrend">Waiting for data</span></div><div class="kw-week-chart" id="kwWeeklyBars"><div class="kw-empty">Enable Usage Access to build your 7-day history.</div></div><div class="kw-week-legend"><span><i class="kw-dot kw-dot-screen"></i>Screen active</span><span><i class="kw-dot kw-dot-study"></i>Study apps</span><span><i class="kw-dot kw-dot-distraction"></i>Distraction</span></div></section>
+  <section class="kw-section-card"><div class="kw-section-head"><div><span class="kw-eyebrow">APP CLASSIFICATION</span><h3>Your apps, your rules</h3><p>Choose how each app should count. YouTube and Telegram start as Mixed because they can be used for both study and entertainment.</p></div></div><div id="kwAppList" class="kw-app-list"><div class="kw-empty">App list will appear after Usage Access is enabled.</div></div></section>
+  <section class="kw-section-card kw-focus-card"><div class="kw-section-head"><div><span class="kw-eyebrow">FOCUS GUARD</span><h3>Protect a study session</h3><p>Block selected apps and enforce daily limits while Focus Guard is active. You can always end the session or use an emergency pass.</p></div><span class="kw-chip" id="kwFocusStatus">OFF</span></div>
+    <div class="kw-disclosure"><b>Optional Accessibility Service disclosure</b><p>When enabled, Android's Accessibility Service checks only the foreground app package name so your selected block list and usage limits can work. It does not inspect screen text, notifications, messages or typed content. You can turn it off at any time in Android Settings.</p><label class="kw-consent-row"><input type="checkbox" id="kwA11yConsent"> I understand and agree to enable Focus Guard on this device.</label></div>
+    <div class="kw-focus-actions"><button type="button" class="kw-secondary-btn" id="kwOpenAccessibility">Set up Focus Guard permission</button><button type="button" class="kw-primary-btn" id="kwToggleFocus">Start Focus Guard</button><button type="button" class="kw-danger-btn" id="kwEndFocus">End focus session</button></div>
+    <p class="kw-small-note" id="kwFocusHelp">Limits apply while Focus Guard is active. Focus Guard remains optional; an Emergency Exit is always available from the blocking screen.</p>
+  </section>
+  <section class="kw-section-card"><div class="kw-section-head"><div><span class="kw-eyebrow">PERSONAL COACH</span><h3>What your data is telling you</h3></div></div><div id="kwSuggestions" class="kw-suggestions"><div class="kw-suggestion">Your suggestions will appear as real usage and study data builds up.</div></div></section>
+  <section class="kw-section-card kw-targets-card"><div class="kw-section-head"><div><span class="kw-eyebrow">YOUR BASELINES</span><h3>Set realistic targets</h3><p>These are your personal targets, not universal rules.</p></div></div><div class="kw-target-grid"><label>Daily study target (hours)<input id="kwStudyTarget" type="number" min="0.5" max="18" step="0.5" value="6"></label><label>Daily screen-time target (hours)<input id="kwScreenTarget" type="number" min="0.5" max="24" step="0.5" value="5"></label><label>Daily distraction target (minutes)<input id="kwDistractionTarget" type="number" min="0" max="720" step="5" value="60"></label><button type="button" class="kw-secondary-btn" id="kwSaveTargets">Save targets</button></div></section>
+  <p class="kw-privacy-note"><i class="ph ph-lock-key"></i> Usage summaries are stored in this app's data and sync to your signed-in KK Monitoring cloud account as part of <code>appData.digitalWellness</code>. You can disable Usage Access or Focus Guard in Android Settings.</p>
+</div>
+
+<div id="view-settings" class="view-section">
+                <div class="glass-panel settings-header" style="padding:25px;">
+                    <h2 class="text-gradient"><i class="ph-fill ph-gear"></i> Settings</h2>
+                    <p style="color:var(--text-muted);margin-top:6px;">Manage security, appearance, backups and local storage.</p>
+                </div>
+                <div class="settings-grid">
+                    <div class="glass-panel settings-card">
+                        <h3>🔐 Security</h3>
+                        <p>Change the 4-digit app PIN used to unlock this dashboard.</p>
+                        <div class="settings-form-grid">
+                            <input id="currentPinSetting" type="password" inputmode="numeric" maxlength="4" class="modern-input" placeholder="Current PIN">
+                            <input id="newPinSetting" type="password" inputmode="numeric" maxlength="4" class="modern-input" placeholder="New 4-digit PIN">
+                            <input id="confirmPinSetting" type="password" inputmode="numeric" maxlength="4" class="modern-input" placeholder="Confirm new PIN">
+                        </div>
+                        <button class="btn-primary" onclick="changeAppPin()">Change PIN</button>
+                        <button class="btn-secondary" onclick="lockSystem()">Lock App Now</button>
+                    </div>
+                    <div class="glass-panel settings-card">
+                        <h3>🎨 Appearance</h3>
+                        <p>Choose how KK's Monitoring looks on this device.</p>
+                        <div class="settings-inline">
+                            <button class="btn-primary" onclick="setTheme('dark')">🌙 Dark Mode</button>
+                            <button class="btn-secondary" onclick="setTheme('light')">☀️ Light Mode</button>
+                            <button class="btn-secondary" onclick="setTheme('system')">🖥️ System</button>
+                        </div>
+                        <p style="margin-top:12px;color:var(--text-muted);font-size:.78rem;">Premium accent themes — changes the complete visual accent, glow and background ambience.</p>
+                        <div id="v31ThemePicker" class="v31-theme-picker"></div>
+                        <div id="themeStatus" class="settings-status"></div>
+                    </div>
+                    <div class="glass-panel settings-card">
+                        <h3>💾 Backup & Restore</h3>
+                        <p>Export your study data and vault metadata, or restore a previous backup.</p>
+                        <div class="settings-inline">
+                            <button class="btn-primary" onclick="exportFullBackup()">⬇ Export Full Backup</button>
+                            <button class="btn-secondary" onclick="document.getElementById('settingsImportInput').click()">⬆ Import Backup</button>
+                            <input id="settingsImportInput" type="file" accept="application/json,.json" style="display:none" onchange="importFullBackup(this)">
+                        </div>
+                    </div>
+                    <div class="glass-panel settings-card">
+                        <h3>🗄️ Storage</h3>
+                        <p>Vault PDFs and images are stored in IndexedDB instead of localStorage.</p>
+                        <div id="storageStatus" class="settings-status">Checking storage…</div>
+                        <button class="btn-secondary" onclick="refreshStorageStatus()">Refresh Storage Info</button>
+                    </div>
+                    <div class="glass-panel settings-card">
+                        <h3>🧹 Data Maintenance</h3>
+                        <p>Use these only when you intentionally want to clear local application data.</p>
+                        <button class="btn-danger" onclick="clearAllAppData()">Reset All App Data</button>
+                    </div>
+                    <div class="glass-panel settings-card">
+                        <h3>ℹ️ About KK's Monitoring</h3>
+                        <p><b>KK's MONITORING</b><br>Personal Study Operating System for SBI, IBPS & RRB preparation.</p>
+                        <div class="v42-about-grid">
+                          <div><b>Founder</b><span>Karan</span></div>
+                          <div><b>Headquarters</b><span>Uttarakhand</span></div>
+                          <div><b>Temporary Base</b><span>Haldwani, Uttarakhand</span></div>
+                          <div><b>Personal Contact</b><span>9058452514</span></div>
+                          <div><b>Personal Email</b><span>krishnamishrakc@gmail.com</span></div>
+                          <div><b>Business Queries</b><span>kkm12ka4@gmail.com</span></div>
+                        </div>
+                        <p style="color:var(--text-muted);font-size:.8rem;">Built with original development work by Karan, with assistance from OpenAI/ChatGPT and Google Gemini.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: TRACKER -->
+            <div id="view-tracker" class="view-section">
+                <div class="glass-panel" style="padding:20px;">
+                    <div class="mock-tracker-heading">
+                        <div><h3>📊 Mock Test Tracker</h3><p class="mock-tracker-hint">Select any mock row to view its complete analysis and compare it with earlier mocks of the same exam.</p></div>
+                    </div>
+                    <div class="mock-tracker-toolbar" aria-label="Mock tracker filters and sorting">
+                        <div class="mock-tracker-toolbar-controls">
+                            <label class="mock-tracker-control" for="trackerFilter"><span>Exam</span>
+                                <select id="trackerFilter" class="modern-input" onchange="updateTracker()">
+                                    <option value="All">All Exams</option><option value="SBI PO">SBI PO</option><option value="IBPS PO">IBPS PO</option><option value="SBI Clerk">SBI Clerk</option><option value="IBPS Clerk">IBPS Clerk</option><option value="IBPS RRB PO">IBPS RRB PO</option><option value="IBPS RRB Clerk">IBPS RRB Clerk</option>
+                                </select>
+                            </label>
+                            <label class="mock-tracker-control" for="trackerTypeFilter"><span>Mock type</span>
+                                <select id="trackerTypeFilter" class="modern-input" onchange="updateTracker()">
+                                    <option value="all">All types</option><option value="full">Full mocks</option><option value="sectional">Sectional mocks</option>
+                                </select>
+                            </label>
+                            <label class="mock-tracker-control mock-tracker-sort-control" for="trackerSort"><span>Sort by</span>
+                                <select id="trackerSort" class="modern-input" onchange="updateTracker()">
+                                    <option value="date-desc">Latest date first</option>
+                                    <option value="date-asc">Oldest date first</option>
+                                    <option value="added-desc">Recently added</option>
+                                    <option value="score-desc">Highest score (%)</option>
+                                    <option value="score-asc">Lowest score (%)</option>
+                                    <option value="accuracy-desc">Highest accuracy</option>
+                                    <option value="accuracy-asc">Lowest accuracy</option>
+                                    <option value="exam-asc">Exam name (A–Z)</option>
+                                    <option value="type-asc">Mock type</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="mock-tracker-toolbar-actions">
+                            <span id="trackerSortStatus" class="mock-tracker-sort-status" aria-live="polite"></span>
+                            <button class="btn-secondary" onclick="exportCSV()"><i class="ph ph-download-simple"></i> Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="excel-table">
+                            <thead>
+                                <tr class="header-row-1"><th colspan="6" class="th-meta">TIME & EXAM DETAILS</th><th colspan="4" class="th-english">ENGLISH</th><th colspan="4" class="th-quants">QUANTS</th><th colspan="4" class="th-reasoning">REASONING</th><th colspan="6" class="th-overall">OVERALL PERFORMANCE</th><th rowspan="2" class="th-meta" style="vertical-align: middle;">ACTIONS</th></tr>
+                                <tr class="header-row-2"><th>Sr</th><th>Type</th><th>Date</th><th>Exam</th><th>Target</th><th>Platform</th><th>Att</th><th>Rgt</th><th>Wrg</th><th>Marks</th><th>Att</th><th>Rgt</th><th>Wrg</th><th>Marks</th><th>Att</th><th>Rgt</th><th>Wrg</th><th>Marks</th><th>Att</th><th>Rgt</th><th>Wrg</th><th>Acc(%)</th><th>%ile</th><th>Total Marks</th></tr>
+                            </thead>
+                            <tbody id="trackerBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding:20px; margin-top: 25px;">
+                    <h3 style="margin-bottom:15px;"><i class="ph-fill ph-rocket-launch text-emerald"></i> Speed Maths Quiz Logs</h3>
+                    <div class="table-responsive">
+                        <table class="excel-table">
+                            <thead>
+                                <tr class="header-row-1"><th class="th-meta">Date</th><th class="th-quants">Time Taken (ms)</th><th class="th-english">Total Right</th><th class="th-reasoning">Total Wrong</th><th class="th-overall">Score (/20)</th></tr>
+                            </thead>
+                            <tbody id="quizLogBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding:20px; margin-top: 25px;">
+                    <h3 style="margin-bottom:15px;"><i class="ph-fill ph-list-numbers text-emerald"></i> Daily Study Logs</h3>
+                    <div class="table-responsive">
+                        <table class="excel-table daily-summary-table">
+                            <thead>
+                                <tr class="header-row-1"><th class="th-meta">Date</th><th class="th-english">Focus Time</th><th class="th-quants">Subjects Breakdown</th><th class="th-reasoning">Waste Time</th><th class="th-meta" style="background:var(--danger);">Waste Reason</th><th class="th-overall">Total Sitting</th></tr>
+                            </thead>
+                            <tbody id="dailySummaryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- CHEAT SHEET MODAL (Fixed Fonts) -->
+    <div id="cheatSheetModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width:1000px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid var(--border-glass); padding-bottom:10px;">
+                <h2 class="text-blue">🧮 Elite Cheat Sheet</h2>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-primary" onclick="switchCheatTab('maths')">Maths Tables</button>
+                    <button class="btn-secondary" onclick="switchCheatTab('formulas')">Quick Formulas</button>
+                </div>
+            </div>
+            
+            <div id="cheatMathsTab">
+                <div style="display:flex; justify-content:space-between; gap:20px; flex-direction:column;">
+                    <div><h4 class="text-emerald mb-2">Tables (12 to 30)</h4><div class="horizontal-scroll-container" id="csTables"></div></div>
+                    <div style="display:flex; gap:20px;">
+                        <div style="flex:1;"><h4 class="text-orange mb-2">Squares (2 to 50)</h4><div style="height:250px; overflow-y:auto; font-family:monospace; color:var(--text-muted); column-count: 3;" id="csSquares"></div></div>
+                        <div style="flex:1;"><h4 class="text-purple mb-2">Cubes (1 to 30)</h4><div style="height:250px; overflow-y:auto; font-family:monospace; color:var(--text-muted); column-count: 2;" id="csCubes"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cheatFormulasTab" style="display:none;">
+                <div class="cheat-filter-row" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                    <button class="btn-primary" id="cheatSubQuant" onclick="renderCheatFormulas('quant')">📘 Quant</button>
+                    <button class="btn-secondary" id="cheatSubReasoning" onclick="renderCheatFormulas('reasoning')">🧠 Reasoning</button>
+                    <button class="btn-secondary" id="cheatSubEnglish" onclick="renderCheatFormulas('english')">📖 English</button>
+                    <button class="btn-secondary" id="cheatSubBanking" onclick="renderCheatFormulas('banking')">🏦 Banking</button>
+                </div>
+                <select id="cheatChapterSelect" class="modern-input" style="margin-bottom:15px;" onchange="renderCheatFormulas(document.getElementById('cheatCurrentSubject').value, this.value)"></select>
+                <input type="hidden" id="cheatCurrentSubject" value="quant">
+                <div id="cheatFormulaContent" class="cheat-formula-grid"></div>
+            </div>
+            <button class="btn-danger mt-3" style="width:100%; margin-top:20px;" onclick="closeModal('cheatSheetModal')">Close Cheat Sheet</button>
+        </div>
+    </div>
+
+    <!-- SMART CALCULATOR -->
+    <div id="calculatorModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width:650px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <h2 class="text-blue">🧮 Smart Calculator</h2>
+                <button class="btn-secondary" type="button" onclick="closeModal('calculatorModal')">✕</button>
+            </div>
+            <div class="calc-tool-grid">
+                <button class="btn-primary" id="calcToolBasic" onclick="switchCalcTool('basic')">Basic</button>
+                <button class="btn-secondary" id="calcToolQuad" onclick="switchCalcTool('quadratic')">Quadratic</button>
+                <button class="btn-secondary" id="calcToolPct" onclick="switchCalcTool('percentage')">Percentage</button>
+                <button class="btn-secondary" id="calcToolProfit" onclick="switchCalcTool('profit')">Profit & Loss</button>
+                <button class="btn-secondary" id="calcToolSI" onclick="switchCalcTool('si')">SI</button>
+                <button class="btn-secondary" id="calcToolCI" onclick="switchCalcTool('ci')">CI</button>
+                <button class="btn-secondary" id="calcToolDST" onclick="switchCalcTool('dst')">Distance–Speed–Time</button>
+                <button class="btn-secondary" id="calcToolBoat" onclick="switchCalcTool('boat')">Boats & Streams</button>
+                <button class="btn-secondary" id="calcToolAvg" onclick="switchCalcTool('average')">Average</button>
+                <button class="btn-secondary" id="calcToolRatio" onclick="switchCalcTool('ratio')">Ratio</button>
+                <button class="btn-secondary" id="calcToolTimeWork" onclick="switchCalcTool('timework')">Time & Work</button>
+                <button class="btn-secondary" id="calcToolTrain" onclick="switchCalcTool('train')">Trains</button>
+                <button class="btn-secondary" id="calcToolAge" onclick="switchCalcTool('age')">Ages</button>
+                <button class="btn-secondary" id="calcToolMixture" onclick="switchCalcTool('mixture')">Mixture</button>
+                <button class="btn-secondary" id="calcToolPartnership" onclick="switchCalcTool('partnership')">Partnership</button>
+                <button class="btn-secondary" id="calcToolLCM" onclick="switchCalcTool('lcm')">HCF / LCM</button>
+                <button class="btn-secondary" id="calcToolWorkpipes" onclick="switchCalcTool('workpipes')">Work & Pipes</button>
+                <button class="btn-secondary" id="calcToolProb" onclick="switchCalcTool('probability')">Probability</button>
+                <button class="btn-secondary" id="calcToolPC" onclick="switchCalcTool('permutation')">P&amp;C</button>
+                <button class="btn-secondary" id="calcToolMens" onclick="switchCalcTool('mensuration')">Mensuration</button>
+                <button class="btn-secondary" id="calcToolRace" onclick="switchCalcTool('race')">Race</button>
+            </div>
+
+            <div id="calcToolBasicPanel" class="calc-panel active">
+                <input type="text" id="calcDisplay" class="modern-input" style="font-size:1.5rem;text-align:right;margin-bottom:10px;font-family:monospace;" disabled>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                    <button class="btn-secondary" onclick="calcPress('7')">7</button><button class="btn-secondary" onclick="calcPress('8')">8</button><button class="btn-secondary" onclick="calcPress('9')">9</button><button class="btn-danger" onclick="calcClear()">C</button>
+                    <button class="btn-secondary" onclick="calcPress('4')">4</button><button class="btn-secondary" onclick="calcPress('5')">5</button><button class="btn-secondary" onclick="calcPress('6')">6</button><button class="btn-primary" onclick="calcPress('/')">÷</button>
+                    <button class="btn-secondary" onclick="calcPress('1')">1</button><button class="btn-secondary" onclick="calcPress('2')">2</button><button class="btn-secondary" onclick="calcPress('3')">3</button><button class="btn-primary" onclick="calcPress('*')">×</button>
+                    <button class="btn-secondary" onclick="calcPress('.')">.</button><button class="btn-secondary" onclick="calcPress('0')">0</button><button class="btn-primary" onclick="calcEval()">=</button><button class="btn-primary" onclick="calcPress('-')">-</button>
+                    <button class="btn-primary" style="grid-column:span 4;" onclick="calcPress('+')">+</button>
+                </div>
+            </div>
+
+            <div id="calcToolQuadraticPanel" class="calc-panel">
+                <p style="color:var(--text-muted);">Solve <b>ax² + bx + c = 0</b></p>
+                <div class="calc-tool-grid" style="grid-template-columns:repeat(3,1fr);">
+                    <input type="number" id="quadA" class="modern-input" placeholder="a">
+                    <input type="number" id="quadB" class="modern-input" placeholder="b">
+                    <input type="number" id="quadC" class="modern-input" placeholder="c">
+                </div>
+                <button class="btn-primary" style="width:100%;" onclick="solveQuadratic()">Solve Roots</button>
+                <div id="quadResult" class="calc-result"></div>
+            </div>
+
+            <div id="calcToolPercentagePanel" class="calc-panel">
+                <div class="calc-tool-grid"><input id="pctPart" type="number" class="modern-input" placeholder="Part"><input id="pctTotal" type="number" class="modern-input" placeholder="Total"></div>
+                <button class="btn-primary" onclick="calcPercentage()">Calculate %</button><div id="pctResult" class="calc-result"></div>
+            </div>
+
+            <div id="calcToolProfitPanel" class="calc-panel">
+                <div class="calc-tool-grid"><input id="plCP" type="number" class="modern-input" placeholder="Cost Price"><input id="plSP" type="number" class="modern-input" placeholder="Selling Price"></div>
+                <button class="btn-primary" onclick="calcProfitLoss()">Calculate</button><div id="plResult" class="calc-result"></div>
+            </div>
+
+            <div id="calcToolSIPanel" class="calc-panel"><div class="calc-tool-grid"><input id="siP" type="number" class="modern-input" placeholder="Principal"><input id="siR" type="number" class="modern-input" placeholder="Rate %"><input id="siT" type="number" class="modern-input" placeholder="Time (years)"></div><button class="btn-primary" onclick="calcSI()">Calculate SI</button><div id="siResult" class="calc-result"></div></div>
+            <div id="calcToolCIPanel" class="calc-panel"><div class="calc-tool-grid"><input id="ciP" type="number" class="modern-input" placeholder="Principal"><input id="ciR" type="number" class="modern-input" placeholder="Rate %"><input id="ciT" type="number" class="modern-input" placeholder="Time (years)"></div><button class="btn-primary" onclick="calcCI()">Calculate CI</button><div id="ciResult" class="calc-result"></div></div>
+            <div id="calcToolDSTPanel" class="calc-panel"><select id="dstFind" class="modern-input" style="margin-bottom:10px;"><option value="distance">Find Distance</option><option value="speed">Find Speed</option><option value="time">Find Time</option></select><div class="calc-tool-grid"><input id="dstA" type="number" class="modern-input" placeholder="Distance"><input id="dstB" type="number" class="modern-input" placeholder="Speed (km/h)"><input id="dstC" type="number" class="modern-input" placeholder="Time (hours)"></div><button class="btn-primary" onclick="calcDST()">Calculate</button><div id="dstResult" class="calc-result"></div></div>
+            <div id="calcToolBoatPanel" class="calc-panel"><div class="calc-tool-grid"><input id="boatDown" type="number" class="modern-input" placeholder="Downstream speed"><input id="boatUp" type="number" class="modern-input" placeholder="Upstream speed"></div><button class="btn-primary" onclick="calcBoat()">Calculate Boat & Stream</button><div id="boatResult" class="calc-result"></div></div>
+            <div id="calcToolAveragePanel" class="calc-panel"><input id="avgNums" class="modern-input" placeholder="Numbers, e.g. 12, 18, 20, 10"><button class="btn-primary" style="margin-top:10px;" onclick="calcAverage()">Calculate Average</button><div id="avgResult" class="calc-result"></div></div>
+            <div id="calcToolRatioPanel" class="calc-panel"><div class="calc-tool-grid"><input id="ratioA" type="number" class="modern-input" placeholder="A"><input id="ratioB" type="number" class="modern-input" placeholder="B"><input id="ratioTotal" type="number" class="modern-input" placeholder="Total (optional)"></div><button class="btn-primary" onclick="calcRatio()">Calculate Ratio</button><div id="ratioResult" class="calc-result"></div></div>
+            <div id="calcToolTimeworkPanel" class="calc-panel"><div class="calc-tool-grid"><input id="twA" type="number" class="modern-input" placeholder="A days alone"><input id="twB" type="number" class="modern-input" placeholder="B days alone"></div><button class="btn-primary" onclick="calcTimeWork()">Calculate Together</button><div id="twResult" class="calc-result"></div></div>
+            <div id="calcToolTrainPanel" class="calc-panel"><div class="calc-tool-grid"><input id="trLen" type="number" class="modern-input" placeholder="Train length (m)"><input id="trSpeed" type="number" class="modern-input" placeholder="Speed (km/h)"><input id="trTime" type="number" class="modern-input" placeholder="Time (sec, optional)"></div><button class="btn-primary" onclick="calcTrain()">Calculate</button><div id="trResult" class="calc-result"></div></div>
+            <div id="calcToolAgePanel" class="calc-panel"><div class="calc-tool-grid"><input id="ageNowA" type="number" class="modern-input" placeholder="Age A now"><input id="ageNowB" type="number" class="modern-input" placeholder="Age B now"><input id="ageYears" type="number" class="modern-input" placeholder="Years (+future / -past)"></div><button class="btn-primary" onclick="calcAge()">Calculate</button><div id="ageResult" class="calc-result"></div></div>
+            <div id="calcToolMixturePanel" class="calc-panel"><div class="calc-tool-grid"><input id="mixQ1" type="number" class="modern-input" placeholder="Quantity 1"><input id="mixP1" type="number" class="modern-input" placeholder="Price 1"><input id="mixQ2" type="number" class="modern-input" placeholder="Quantity 2"><input id="mixP2" type="number" class="modern-input" placeholder="Price 2"></div><button class="btn-primary" onclick="calcMixture()">Calculate Average Price</button><div id="mixResult" class="calc-result"></div></div>
+            <div id="calcToolPartnershipPanel" class="calc-panel"><div class="calc-tool-grid"><input id="partCA" type="number" class="modern-input" placeholder="A Capital"><input id="partMA" type="number" class="modern-input" placeholder="A Months"><input id="partCB" type="number" class="modern-input" placeholder="B Capital"><input id="partMB" type="number" class="modern-input" placeholder="B Months"></div><button class="btn-primary" onclick="calcPartnership()">Calculate Profit Ratio</button><div id="partResult" class="calc-result"></div></div>
+            <div id="calcToolLCMPanel" class="calc-panel"><input id="hcfLcmNums" class="modern-input" placeholder="Numbers, e.g. 12, 18, 30"><button class="btn-primary" style="margin-top:10px;" onclick="calcHcfLcm()">Calculate HCF & LCM</button><div id="hcfLcmResult" class="calc-result"></div></div>
+            <div id="calcToolWorkpipesPanel" class="calc-panel"><div class="calc-tool-grid"><input id="wpA" type="number" class="modern-input" placeholder="A days alone"><input id="wpB" type="number" class="modern-input" placeholder="B days alone"><input id="wpC" type="number" class="modern-input" placeholder="C days alone (optional)"></div><button class="btn-primary" onclick="calcWorkPipes()">Calculate Together</button><div id="wpResult" class="calc-result"></div></div>
+            <div id="calcToolProbabilityPanel" class="calc-panel"><div class="calc-tool-grid"><input id="probFavour" type="number" class="modern-input" placeholder="Favourable outcomes"><input id="probTotal" type="number" class="modern-input" placeholder="Total outcomes"></div><button class="btn-primary" onclick="calcProbability()">Calculate Probability</button><div id="probResult" class="calc-result"></div></div>
+            <div id="calcToolPermutationPanel" class="calc-panel"><div class="calc-tool-grid"><input id="pcN" type="number" class="modern-input" placeholder="n"><input id="pcR" type="number" class="modern-input" placeholder="r"></div><div style="display:flex;gap:8px"><button class="btn-primary" onclick="calcPC('npr')">nPr</button><button class="btn-secondary" onclick="calcPC('ncr')">nCr</button></div><div id="pcResult" class="calc-result"></div></div>
+            <div id="calcToolMensurationPanel" class="calc-panel"><select id="mensShape" class="modern-input" style="margin-bottom:10px"><option value="rectangle">Rectangle</option><option value="square">Square</option><option value="circle">Circle</option><option value="cylinder">Cylinder</option></select><input id="mensA" type="number" class="modern-input" placeholder="Length / Side / Radius"><input id="mensB" type="number" class="modern-input" placeholder="Breadth / Height (if needed)" style="margin-top:8px"><button class="btn-primary" style="margin-top:10px" onclick="calcMensuration()">Calculate</button><div id="mensResult" class="calc-result"></div></div>
+            <div id="calcToolRacePanel" class="calc-panel"><div class="calc-tool-grid"><input id="raceA" type="number" class="modern-input" placeholder="Race distance (metres)"><input id="raceB" type="number" class="modern-input" placeholder="Winning lead (metres)"><input id="raceTime" type="number" class="modern-input" placeholder="Winner time (seconds, optional)"></div><button class="btn-primary" onclick="calcRace()">Calculate Ratio</button><div id="raceResult" class="calc-result"></div></div>
+        </div>
+    </div>
+
+    <!-- VAULT FOLDERS -->
+    <div id="folderModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width:800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h2 class="text-gradient" id="currentFolderName">Folder Notes</h2>
+                    <button class="btn-secondary" style="padding:2px 8px; font-size:0.8rem;" onclick="renameCurrentFolder()"><i class="ph-bold ph-pencil"></i></button>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-secondary" onclick="createSubFolder()"><i class="ph-bold ph-folder-plus"></i> Sub Folder</button>
+                    <button class="btn-primary" onclick="addNoteToFolder()"><i class="ph-bold ph-plus"></i> Text Note</button>
+                    <label class="btn-secondary" style="cursor: pointer;">
+                        <i class="ph-bold ph-upload-simple"></i> Upload File(s)
+                        <input type="file" id="vaultMultiFile" accept="image/*,.pdf" multiple style="display:none;" onchange="addFileToFolder(event)">
+                    </label>
+                </div>
+            </div>
+            <div id="notesGrid" style="max-height:450px; overflow-y:auto; padding-right:10px; padding-bottom:15px;"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-danger" style="flex:1;" onclick="deleteCurrentFolder()">Delete Folder</button>
+                <button class="btn-secondary" style="flex:1;" onclick="closeModal('folderModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREVIEWS -->
+    <div id="filePreviewModal" class="modal-overlay" style="z-index: 10005;">
+        <div class="modal-content glass-panel" style="max-width:800px; height:80vh; display:flex; flex-direction:column; padding:25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 class="text-emerald" style="margin:0;">📄 File Preview <span id="previewCounter" style="color:var(--text-muted); font-size:1rem; margin-left:10px;"></span></h3>
+                <div id="previewControls" style="display:none; gap:10px;">
+                    <button class="btn-secondary" style="padding:6px 15px;" onclick="prevPreviewFile()"><i class="ph-bold ph-caret-left"></i> Prev</button>
+                    <button class="btn-secondary" style="padding:6px 15px;" onclick="nextPreviewFile()">Next <i class="ph-bold ph-caret-right"></i></button>
+                </div>
+            </div>
+            <div id="previewContainer" style="flex:1; background:rgba(0,0,0,0.5); border-radius:10px; overflow:hidden; display:flex; justify-content:center; align-items:center;"></div>
+            <button class="btn-danger" style="margin-top:15px; width:100%;" onclick="closeModal('filePreviewModal')">Close Preview</button>
+        </div>
+    </div>
+
+    <div id="quizSummaryModal" class="modal-overlay" style="z-index: 10005;">
+        <div class="modal-content glass-panel" style="max-width:600px;">
+            <h2 class="text-emerald" style="margin-bottom:15px; text-align:center;">🏆 Quiz Summary</h2>
+            <div id="quizSummaryList" style="max-height:60vh; overflow-y:auto; margin-bottom:15px; display:flex; flex-direction:column; gap:10px;"></div>
+            <button class="btn-primary" style="width:100%;" onclick="closeModal('quizSummaryModal')">Done</button>
+        </div>
+    </div>
+
+    <div id="mockDetailModal" class="mock-detail-overlay" hidden aria-hidden="true">
+        <section class="mock-detail-shell" role="dialog" aria-modal="true" aria-labelledby="mockDetailTitle">
+            <header class="mock-detail-header">
+                <div><span class="mock-analysis-eyebrow">MOCK ANALYSIS</span><h2 id="mockDetailTitle">Mock Performance</h2></div>
+                <button type="button" class="mock-detail-close" data-mock-close aria-label="Close mock analysis">×</button>
+            </header>
+            <div id="mockDetailBody" class="mock-detail-body"></div>
+        </section>
+    </div>
+
+    <div id="aiModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 550px;">
+            <h2 class="text-gradient" style="text-align:center; margin-bottom:10px;"><i class="ph-fill ph-robot"></i> AI Coach Feedback</h2>
+            <div id="aiModalBody" style="font-size:1.05rem; margin-bottom:20px; color:var(--text-main); line-height:1.6;"></div>
+            <button class="btn-primary glow-btn" style="width:100%; justify-content:center;" onclick="document.getElementById('aiModal').classList.remove('show')">Got It! 🔥</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast glass-card"><i class="ph-fill ph-check-circle text-emerald" id="toastIcon"></i> <span id="toastMsg">Success</span></div>
+
+    <script>
+      // Chart.js is optional at startup and loaded once on first analytics request.
+      window.__kkChartPromise = null;
+      window.__kkEnsureChart = function(){
+        if (window.Chart) return Promise.resolve(true);
+        if (window.__kkChartPromise) return window.__kkChartPromise;
+        window.__kkChartPromise = new Promise(resolve => {
+          const existing = document.querySelector('script[data-kk-chart-loader]');
+          if (existing) { existing.addEventListener('load',()=>resolve(true),{once:true}); existing.addEventListener('error',()=>resolve(false),{once:true}); return; }
+          const s=document.createElement('script');
+          s.src='https://cdn.jsdelivr.net/npm/chart.js';
+          s.async=true; s.dataset.kkChartLoader='1';
+          s.onload=()=>resolve(!!window.Chart); s.onerror=()=>resolve(false);
+          document.head.appendChild(s);
+        });
+        return window.__kkChartPromise;
+      };
+    </script>
+
+    <!-- Single-bundle boot: one application script is loaded after the PIN is accepted. -->
+    <script>
+      (() => {
+        'use strict';
+        const SESSION_KEY = 'kkUnlocked_v65';
+        let bootPromise = null;
+        const loadScript = (src, timeout=15000) => new Promise(resolve => {
+          const existing = [...document.scripts].find(x => x.dataset.kkSrc === src);
+          if (existing) return resolve(true);
+          const s=document.createElement('script'); s.dataset.kkSrc=src; s.async=false; let done=false;
+          const finish=ok=>{ if(done)return; done=true; clearTimeout(timer); resolve(!!ok); };
+          const timer=setTimeout(()=>finish(false), timeout);
+          s.src=src; s.onload=()=>finish(true); s.onerror=()=>finish(false); document.body.appendChild(s);
+        });
+        async function boot(){
+          if(bootPromise) return bootPromise;
+          bootPromise=(async()=>{
+            try{ sessionStorage.setItem(SESSION_KEY,'true'); }catch(_){ }
+            const results = [];
+            for (const src of ['app.js?v=69']) { results.push(await loadScript(src)); }
+            window.__kkAllModulesReady = true;
+            if (typeof window.initDashboard === 'function') window.initDashboard();
+            if (typeof window.v42Init === 'function') window.v42Init();
+            if (typeof window.commandEnhancementsInit === 'function') window.commandEnhancementsInit();
+            window.__kkCoreReady = true;
+            window.dispatchEvent(new Event('kk:core-ready'));
+            return results.every(Boolean);
+          })();
+          return bootPromise;
+        }
+        window.__kkLoadAppAfterUnlock = boot;
+        window.addEventListener('kk:unlocked', boot, {once:true});
+        if (sessionStorage.getItem(SESSION_KEY) === 'true') boot();
+      })();
+    </script>
+</body>
+</html>
