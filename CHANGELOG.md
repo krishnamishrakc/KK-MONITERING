@@ -22,3 +22,15 @@
 - Added cloud merge support for digitalWellness snapshots and settings.
 - Added Capacitor 6 native source patch for UsageStats and optional Accessibility-based Focus Guard with explicit disclosure, emergency pass and manual end-session.
 - Fixed Daily Study Logs mobile overlap with labelled responsive rows; wide mock tables remain in their own horizontal scrollers.
+
+## V70.0.1 build fix
+- Enable Kotlin Gradle plugin in the generated Capacitor Android project before copying/compiling the native Kotlin wellness plugin and Focus Guard classes.
+- Fixes the missing `KKWellnessPlugin` Java compile symbol seen when Capacitor generated a Java `MainActivity` but Kotlin support was not enabled.
+
+
+## V71.0 — Gallery-inspired Android refinement
+- Replaced the Android bottom-navigation Plan slot with a direct Add Mock action; Daily Plan remains available in the navigation drawer.
+- Added a persistent Midnight/Ivory Gallery appearance selector in Settings.
+- Added responsive mobile mock summary cards generated from existing tracker rows while preserving the desktop table.
+- Refined mobile glass surfaces, typography, navigation safe-area spacing, chart sizing and table overflow behavior.
+- Existing app data schema, cloud sync code, mock form, and desktop layout are retained.

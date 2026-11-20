@@ -1,8 +1,8 @@
 {
   "name": "kk-monitoring-android",
-  "version": "70.0.0",
+  "version": "71.0.0",
   "private": true,
-  "description": "KK Monitoring V70 Android-first shell and Digital Wellness module",
+  "description": "KK Monitoring V71 Gallery-inspired Android UI refinement",
   "scripts": {
     "build": "node scripts/build-web.js",
     "android:sync": "npx cap sync android",
