@@ -45,6 +45,39 @@ function patchManifest() {
   }
   fs.writeFileSync(manifest, xml);
 }
+
+function enableKotlinForNativePatch() {
+  // The Capacitor Android template creates MainActivity.java, while the
+  // optional native wellness plugin/service sources are Kotlin (.kt).
+  // Explicitly enable Kotlin in the generated Android Gradle project.
+  const rootGradle = path.join(androidRoot, 'build.gradle');
+  const appGradle = path.join(androidRoot, 'app', 'build.gradle');
+  if (!fs.existsSync(rootGradle) || !fs.existsSync(appGradle)) {
+    throw new Error('Expected Android Gradle files were not found.');
+  }
+
+  let rootText = fs.readFileSync(rootGradle, 'utf8');
+  const kotlinClasspath = `classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'`;
+  if (!rootText.includes('kotlin-gradle-plugin')) {
+    const deps = /dependencies\s*\{/m;
+    if (!deps.test(rootText)) throw new Error('Could not find root buildscript dependencies block to add Kotlin Gradle plugin.');
+    rootText = rootText.replace(deps, match => `${match}\n        ${kotlinClasspath}`);
+    fs.writeFileSync(rootGradle, rootText);
+  }
+
+  let appText = fs.readFileSync(appGradle, 'utf8');
+  if (!appText.includes("kotlin-android") && !appText.includes("org.jetbrains.kotlin.android")) {
+    if (/apply plugin:\s*['"]com\.android\.application['"]/.test(appText)) {
+      appText = appText.replace(/apply plugin:\s*['"]com\.android\.application['"]/, match => `${match}\napply plugin: 'kotlin-android'`);
+    } else if (/plugins\s*\{/.test(appText)) {
+      appText = appText.replace(/plugins\s*\{/, match => `${match}\n    id 'org.jetbrains.kotlin.android' version '1.9.22'`);
+    } else {
+      throw new Error('Could not find Android application plugin declaration in app/build.gradle.');
+    }
+    fs.writeFileSync(appGradle, appText);
+  }
+}
+
 function addImport(source, line, kotlin) {
   if (source.split(/\r?\n/).some(existing => existing.trim() === line)) return source;
   const packageRegex = kotlin ? /^package [^\r\n]+/m : /^package [^;\r\n]+;/m;
@@ -96,6 +129,7 @@ if (!fs.existsSync(androidRoot)) throw new Error('Android folder is missing. Run
 copyTree(path.join(patchRoot, 'java', 'com', 'kkcreation', 'studytrack'), path.join(appMain, 'java', 'com', 'kkcreation', 'studytrack'));
 copyTree(path.join(patchRoot, 'res', 'xml'), path.join(appMain, 'res', 'xml'));
 copyTree(path.join(patchRoot, 'res', 'values'), path.join(appMain, 'res', 'values'));
+enableKotlinForNativePatch();
 patchManifest();
 patchMainActivity();
 console.log('Applied KK Monitoring UsageStats and optional Focus Guard native patch.');
