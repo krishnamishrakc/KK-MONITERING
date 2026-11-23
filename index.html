@@ -741,7 +741,7 @@
         </div>
     </div>
 
-    <div id="toast" class="toast glass-card"><i class="ph-fill ph-check-circle text-emerald" id="toastIcon"></i> <span id="toastMsg">Success</span></div>
+    <div id="toast" class="toast glass-card" role="status" aria-live="polite"><div class="kw-toast-body"><i class="ph-fill ph-check-circle text-emerald" id="toastIcon"></i> <span id="toastMsg">Success</span></div><button type="button" id="toastCloseBtn" class="kw-toast-close" aria-label="Dismiss notification" onclick="window.hideToast?.()">✕</button></div>
 
     <script>
       // Chart.js is optional at startup and loaded once on first analytics request.

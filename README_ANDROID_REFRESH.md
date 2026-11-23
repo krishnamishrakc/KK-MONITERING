@@ -53,3 +53,6 @@ Daily summaries live inside `appData.digitalWellness`. Existing Firebase authent
 ## Default baselines
 
 The initial personal targets are 6 hours study, 5 hours screen-active time and 60 minutes distraction. These are editable starting values only; change them on Digital Wellness to match your routine.
+
+### Build note (V70.0.1)
+The Android preparation script now enables the Kotlin Gradle plugin in the generated Android project. This is required because the optional native wellness plugin and Focus Guard service are Kotlin source files, while the Capacitor template may generate a Java `MainActivity`.

@@ -4,9 +4,11 @@
   if (window.__kkDigitalWellnessLoaded) return;
   window.__kkDigitalWellnessLoaded = true;
   const DAY = 86400000;
-  const studyDefaults = ['guidely', 'testbook', 'yes officer', 'learning capsule', 'mahendras'];
-  const mixedDefaults = ['youtube', 'telegram'];
+  const studyDefaults = ['guidely', 'testbook', 'yes officer', 'learning capsule', 'mahendras', 'oliveboard', 'adda247', 'unacademy', 'physics wallah', 'chatgpt', 'gemini', 'claude', 'perplexity', 'anki', 'notion', 'duolingo', 'khan'];
+  const mixedDefaults = ['youtube', 'telegram', 'whatsapp', 'chrome', 'brave', 'browser', 'google', 'drive', 'docs', 'sheets', 'maps', 'gmail', 'outlook'];
   let plugin = null, refreshBusy = false, refreshTimer = null, initialized = false;
+  let showAllApps = false, appSearchQuery = '';
+  const COLLAPSED_APP_LIMIT = 5;
   const todayKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = ms => {
@@ -137,17 +139,53 @@
   function renderApps() {
     const d=appData(), host=document.getElementById('kwAppList'); if(!host)return;
     const snap=d.dailySnapshots[todayKey()];
-    const apps=(Array.isArray(snap?.apps)?snap.apps:[]).filter(a=>a?.packageName).sort((a,b)=>(Number(b.foregroundMs)||0)-(Number(a.foregroundMs)||0));
-    if(!apps.length){host.innerHTML='<div class="kw-empty">No apps returned yet. Enable Usage Access and tap Refresh usage.</div>';return;}
-    host.innerHTML=apps.map(a=>{
+    const allApps=(Array.isArray(snap?.apps)?snap.apps:[]).filter(a=>a?.packageName).sort((a,b)=>(Number(b.foregroundMs)||0)-(Number(a.foregroundMs)||0));
+    if(!allApps.length){host.innerHTML='<div class="kw-empty">No apps returned yet. Enable Usage Access and tap Refresh usage.</div>';return;}
+
+    const q = appSearchQuery.trim().toLowerCase();
+    const filtered = q ? allApps.filter(a => String(a.label||'').toLowerCase().includes(q) || String(a.packageName||'').toLowerCase().includes(q)) : allApps;
+    const visible = (q || showAllApps) ? filtered : filtered.slice(0, COLLAPSED_APP_LIMIT);
+    const hiddenCount = Math.max(0, filtered.length - visible.length);
+
+    let toolbar = document.getElementById('kwAppListToolbar');
+    if (!toolbar) {
+      toolbar = document.createElement('div');
+      toolbar.id = 'kwAppListToolbar';
+      toolbar.className = 'kw-app-toolbar';
+      toolbar.innerHTML = `<input type="search" id="kwAppSearchInput" class="kw-app-search" placeholder="Search apps (${allApps.length})…" aria-label="Search apps"><span class="kw-app-count" id="kwAppCountBadge"></span>`;
+      host.insertAdjacentElement('beforebegin', toolbar);
+      toolbar.querySelector('#kwAppSearchInput')?.addEventListener('input', e => {
+        appSearchQuery = e.target.value || '';
+        renderApps();
+      });
+    }
+    const searchInput = document.getElementById('kwAppSearchInput');
+    if (searchInput) {
+      searchInput.placeholder = `Search ${allApps.length} apps…`;
+      if (document.activeElement !== searchInput && searchInput.value !== appSearchQuery) searchInput.value = appSearchQuery;
+    }
+    const countBadge = document.getElementById('kwAppCountBadge');
+    if (countBadge) countBadge.textContent = q ? `${filtered.length} match${filtered.length===1?'':'es'}` : `Showing ${visible.length} of ${allApps.length}`;
+
+    const rowsHtml = visible.length ? visible.map(a=>{
       const name=escapeHTML(a.label||a.packageName), pkg=escapeHTML(a.packageName), cat=categoryFor(a), limit=Number(d.appLimits[a.packageName])||0, blocked=d.blockedPackages.includes(a.packageName);
       return `<div class="kw-app-row" data-package="${pkg}"><div class="kw-app-ident"><span class="kw-app-icon">${escapeHTML((a.label||a.packageName||'?').slice(0,1).toUpperCase())}</span><div><b>${name}</b><small>${fmt(a.foregroundMs)} today · ${pkg}</small></div></div><select class="kw-category-select" aria-label="Category for ${name}"><option value="study" ${cat==='study'?'selected':''}>Study</option><option value="mixed" ${cat==='mixed'?'selected':''}>Mixed</option><option value="distraction" ${cat==='distraction'?'selected':''}>Distraction</option></select><label class="kw-app-limit">Limit <input class="kw-limit-input" type="number" min="0" max="720" step="5" value="${limit}" aria-label="Daily limit minutes">m</label><label class="kw-app-block"><input class="kw-block-check" type="checkbox" ${blocked?'checked':''}> Block in Focus</label></div>`;
-    }).join('');
+    }).join('') : '<div class="kw-empty">No matching apps found.</div>';
+
+    const toggleHtml = (!q && allApps.length > COLLAPSED_APP_LIMIT)
+      ? `<button type="button" id="kwToggleAllAppsBtn" class="kw-secondary-btn kw-view-all-apps-btn">${showAllApps ? `Show Top ${COLLAPSED_APP_LIMIT} Apps ▲` : `View All Apps (${allApps.length} total, +${hiddenCount} more) ▼`}</button>`
+      : '';
+
+    host.innerHTML = rowsHtml + toggleHtml;
     host.querySelectorAll('.kw-app-row').forEach(row=>{
       const pkg=row.dataset.package;
       row.querySelector('.kw-category-select')?.addEventListener('change',e=>{d.categories[pkg]=e.target.value; save(); renderAll();});
       row.querySelector('.kw-limit-input')?.addEventListener('change',e=>{const n=Math.max(0,Math.min(720,Number(e.target.value)||0)); if(n)d.appLimits[pkg]=n;else delete d.appLimits[pkg];e.target.value=n; save(); syncFocusPolicy();});
       row.querySelector('.kw-block-check')?.addEventListener('change',e=>{d.blockedPackages=d.blockedPackages.filter(x=>x!==pkg);if(e.target.checked)d.blockedPackages.push(pkg);save();syncFocusPolicy();});
+    });
+    document.getElementById('kwToggleAllAppsBtn')?.addEventListener('click', () => {
+      showAllApps = !showAllApps;
+      renderApps();
     });
   }
   function renderAll() {
@@ -160,7 +198,7 @@
     if(scoreEl)scoreEl.textContent=score.overall==null?'—':String(score.overall);
     if(ring)ring.style.background=`conic-gradient(from -90deg, rgba(112,222,192,.9) ${score.overall||0}%, rgba(255,255,255,.08) 0)`;
     if(hint)hint.textContent=score.overall==null?'Add study sessions, mocks and Android usage data to begin scoring.':`${score.isComplete?'All four signals are active.':'Provisional · waiting for some data.'} Study score uses the higher of Focus Timer or Study-app time to avoid obvious overlap double-counting. ${score.parts.map(x=>`${x.label} ${Math.round(x.score)}`).join(' · ')}`;
-    const help=document.getElementById('kwScreenHint');if(help)help.textContent=snap?`${fmt(snap.totalForegroundMs)} tracked app foreground time`:'Android Usage Access required';
+    const help=document.getElementById('kwScreenHint');if(help)help.textContent=snap?`Active screen use · ${apps.length} app${apps.length===1?'':'s'} today`:'Android Usage Access required';
     const studyHint=document.getElementById('kwStudyHint');if(studyHint)studyHint.textContent=snap?`${apps.filter(a=>categoryFor(a)==='study').length} apps classified as Study · included in score`:'Categorise your learning apps';
     const discHint=document.getElementById('kwDistractionHint');if(discHint)discHint.textContent=snap?`${apps.filter(a=>categoryFor(a)==='distraction').length} apps classified as Distraction`:'Only apps you mark Distraction';
     const focus=document.getElementById('kwFocusStatus');if(focus)focus.textContent=d.focusEnabled?(d.focusServiceEnabled?'ACTIVE':'PERMISSION OFF'):'OFF';

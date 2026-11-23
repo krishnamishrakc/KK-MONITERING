@@ -12723,13 +12723,23 @@ function escapeHTML(value) {
 }
 function safeJSString(value) { return JSON.stringify(String(value ?? '')); }
 
+let __kkToastTimer = null;
+window.hideToast = function() {
+    try {
+        if (__kkToastTimer) { clearTimeout(__kkToastTimer); __kkToastTimer = null; }
+        const toast = document.getElementById('toast');
+        if (toast) toast.classList.remove('show');
+    } catch(e){}
+};
 window.showToast = function(msg, isError = false) {
     try {
         const toast = document.getElementById('toast'); const icon = document.getElementById('toastIcon'); const msgEl = document.getElementById('toastMsg');
         if (!toast || !msgEl) return; msgEl.innerText = msg;
-        icon.className = isError ? "ph-fill ph-warning-circle text-danger" : "ph-fill ph-check-circle text-emerald"; 
+        icon.className = isError ? "ph-fill ph-warning-circle text-danger" : "ph-fill ph-check-circle text-emerald";
         toast.style.borderColor = isError ? "var(--danger)" : "var(--neon-emerald)";
-        toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000);
+        if (__kkToastTimer) clearTimeout(__kkToastTimer);
+        toast.classList.add('show');
+        __kkToastTimer = setTimeout(() => { toast.classList.remove('show'); __kkToastTimer = null; }, 3800);
     } catch(e){}
 };
 

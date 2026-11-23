@@ -84,3 +84,378 @@
 }
 @keyframes kwPageIn { from { opacity:0;transform:translateY(9px) scale(.995); } to { opacity:1;transform:translateY(0) scale(1); } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important; } }
+
+
+/* ===== V71 Gallery-inspired Android refinement ===== */
+:root {
+  --kw-bg:#111111; --kw-panel:rgba(34,34,36,.78); --kw-panel-strong:rgba(27,27,29,.96);
+  --kw-line:rgba(255,255,255,.10); --kw-text:#f5f2ec; --kw-muted:#aaa7a0;
+  --kw-blue:#c9bda7; --kw-cyan:#d9cbb4; --kw-violet:#b9b0a2;
+  --kw-green:#a9c7ad; --kw-coral:#d7a7a0; --kw-shadow:0 16px 48px rgba(0,0,0,.22);
+}
+html[data-kw-gallery="light"],body[data-kw-gallery="light"] {
+  --kw-bg:#f3f0e9; --kw-panel:rgba(255,255,255,.78); --kw-panel-strong:rgba(255,255,255,.96);
+  --kw-line:rgba(36,34,30,.11); --kw-text:#242321; --kw-muted:#77736c;
+  --kw-blue:#8d7960; --kw-cyan:#9b866b; --kw-violet:#9b9183;
+  --kw-green:#66836c; --kw-coral:#a66e64; --kw-shadow:0 12px 36px rgba(48,42,33,.09);
+}
+html.kw-android-ui, body.kw-android-ui { background:var(--kw-bg)!important; color:var(--kw-text)!important; }
+.kw-android-ui .apple-ambient-bg,.kw-android-ui .effect-overlay { opacity:.16!important; }
+.kw-android-ui .main-content { background:transparent!important; }
+.kw-android-ui .glass-panel,.kw-android-ui .glass-card,.kw-android-ui .kw-today-card,
+.kw-android-ui .kw-section-card,.kw-android-ui .kw-metric-card,.kw-android-ui .kw-page-hero,
+.kw-android-ui .settings-card {
+  color:var(--kw-text)!important; background:var(--kw-panel)!important; border:1px solid var(--kw-line)!important;
+  border-radius:25px!important; box-shadow:var(--kw-shadow)!important; backdrop-filter:blur(26px) saturate(125%)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(125%)!important;
+}
+.kw-android-ui h1,.kw-android-ui h2,.kw-android-ui h3,.kw-android-ui h4,
+.kw-android-ui .text-gradient { color:var(--kw-text)!important; background:none!important; -webkit-text-fill-color:currentColor!important; }
+.kw-android-ui p,.kw-android-ui small,.kw-android-ui label { color:var(--kw-muted); }
+.kw-android-ui button,.kw-android-ui input,.kw-android-ui select,.kw-android-ui textarea {
+  font:inherit; border-radius:16px;
+}
+.kw-android-ui .modern-input,.kw-android-ui input,.kw-android-ui select,.kw-android-ui textarea {
+  color:var(--kw-text)!important; background:var(--kw-panel-strong)!important; border:1px solid var(--kw-line)!important;
+  min-height:46px;
+}
+.kw-android-ui .btn-primary,.kw-android-ui .kw-primary-btn {
+  color:#24211c!important; background:linear-gradient(135deg,#e8ddca,#c7b79e)!important; border:0!important;
+  box-shadow:0 8px 22px rgba(190,170,140,.18)!important;
+}
+.kw-android-ui .btn-secondary,.kw-android-ui .kw-secondary-btn {
+  color:var(--kw-text)!important; background:rgba(255,255,255,.055)!important; border:1px solid var(--kw-line)!important;
+}
+#kkAndroidBottomNav {
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom,0px))!important;
+  min-height:76px!important; background:rgba(20,20,21,.91)!important;
+  border:1px solid rgba(255,255,255,.11)!important; box-shadow:0 12px 40px rgba(0,0,0,.3)!important;
+  backdrop-filter:blur(30px) saturate(145%)!important; -webkit-backdrop-filter:blur(30px) saturate(145%)!important;
+}
+html[data-kw-gallery="light"] #kkAndroidBottomNav,body[data-kw-gallery="light"] #kkAndroidBottomNav {
+  background:rgba(250,248,243,.94)!important; border-color:rgba(30,28,24,.12)!important;
+}
+#kkAndroidBottomNav .kw-bnav-btn { flex:1 1 0; min-width:0; gap:4px!important; color:#aaa69f!important; }
+#kkAndroidBottomNav .kw-bnav-btn span { font-size:10px!important; white-space:nowrap; }
+#kkAndroidBottomNav .kw-bnav-btn i { font-size:20px!important; }
+#kkAndroidBottomNav .kw-bnav-btn.active { color:#f2e6d4!important; background:rgba(205,187,158,.13)!important; border-radius:18px!important; }
+#kkAndroidBottomNav .kw-bnav-add { flex:1.15 1 0; color:#eadcc5!important; }
+#kkAndroidBottomNav .kw-bnav-add i { width:31px;height:31px;display:grid;place-items:center;border-radius:50%;background:#e5d8c4;color:#28241e;font-size:21px!important; }
+.kw-android-ui body,.kw-android-ui .main-content { padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))!important; }
+#kkMobileTopBar { background:rgba(20,20,21,.88)!important; border-bottom:1px solid var(--kw-line)!important; backdrop-filter:blur(26px)!important; }
+html[data-kw-gallery="light"] #kkMobileTopBar { background:rgba(247,244,237,.93)!important; }
+.kw-android-ui .view-section { padding-left:12px!important; padding-right:12px!important; }
+.kw-android-ui .view-section > .glass-panel,.kw-android-ui .view-section > section { max-width:100%; min-width:0; }
+.kw-android-ui .cc-grid,.kw-android-ui .cc-analytics-grid,.kw-android-ui .kw-metric-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+.kw-android-ui .cc-card,.kw-android-ui .graph-card { min-width:0!important; overflow:hidden!important; }
+.kw-android-ui .graph-card canvas,.kw-android-ui canvas { max-width:100%!important; }
+.kw-android-ui .table-responsive { max-width:100%; overflow-x:auto!important; -webkit-overflow-scrolling:touch; border-radius:16px; }
+.kw-android-ui .excel-table { min-width:980px; font-size:12px!important; }
+.kw-android-ui .excel-table th,.kw-android-ui .excel-table td { padding:9px 8px!important; white-space:nowrap; }
+.kw-gallery-settings .kw-gallery-options { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px; }
+.kw-gallery-choice { display:grid;gap:7px;text-align:left;padding:13px;border:1px solid var(--kw-line);border-radius:18px;background:var(--kw-panel-strong);color:var(--kw-text); }
+.kw-gallery-choice.active { outline:2px solid var(--kw-cyan); }
+.kw-gallery-choice small { color:var(--kw-muted); }
+.kw-swatch { display:block;height:46px;border-radius:12px;border:1px solid var(--kw-line); }
+.kw-swatch-dark { background:linear-gradient(135deg,#111,#393632 60%,#b5a58d); }
+.kw-swatch-light { background:linear-gradient(135deg,#fffdf7,#e9e2d5 60%,#a99b83); }
+.kw-gallery-settings { margin-bottom:16px; }
+.kw-android-ui .mock-tracker-toolbar { display:grid!important;gap:12px!important; }
+.kw-android-ui .mock-tracker-toolbar-controls { display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important; }
+.kw-android-ui .mock-tracker-control { min-width:0!important; }
+.kw-android-ui .mock-tracker-sort-control { grid-column:1/-1; }
+.kw-android-ui .mock-tracker-toolbar-actions { display:flex!important;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap; }
+.kw-android-ui .mock-tracker-heading { display:block!important; }
+.kw-android-ui .mock-tracker-heading h3 { font-size:1.25rem!important; }
+.kw-android-ui .kw-mobile-mock-list { display:grid;gap:12px;margin-top:14px; }
+.kw-android-ui .kw-mobile-mock-card { border:1px solid var(--kw-line);border-radius:20px;padding:14px;background:var(--kw-panel-strong);color:var(--kw-text); }
+.kw-android-ui .kw-mobile-mock-top { display:flex;justify-content:space-between;gap:10px;align-items:flex-start; }
+.kw-android-ui .kw-mobile-mock-title { font-weight:800;font-size:15px;line-height:1.35; }
+.kw-android-ui .kw-mobile-mock-meta { color:var(--kw-muted);font-size:12px;margin-top:4px; }
+.kw-android-ui .kw-mobile-mock-score { font-size:21px;font-weight:800;white-space:nowrap; }
+.kw-android-ui .kw-mobile-mock-stats { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px; }
+.kw-android-ui .kw-mobile-mock-stat { padding:9px;border-radius:13px;background:rgba(255,255,255,.045);min-width:0; }
+.kw-android-ui .kw-mobile-mock-stat b { display:block;font-size:14px; }
+.kw-android-ui .kw-mobile-mock-stat small { display:block;font-size:10px;color:var(--kw-muted); }
+.kw-android-ui .kw-mobile-mock-actions { display:flex;gap:8px;margin-top:11px; }
+.kw-android-ui .kw-mobile-mock-actions button { flex:1;min-height:38px; }
+.kw-android-ui .kw-mobile-mock-list .mock-empty-row { display:block; }
+.kw-android-ui .kw-mobile-mock-list .mock-empty-row td { display:block;white-space:normal; }
+.kw-android-ui .kw-permission-card { position:static!important; transform:none!important; }
+@media(max-width:820px) {
+  .kw-android-ui .main-content { overflow-x:hidden!important; }
+  .kw-android-ui .view-section { overflow-x:hidden; }
+  .kw-android-ui .cc-grid,.kw-android-ui .cc-analytics-grid,.kw-android-ui .kw-metric-grid { gap:10px!important; }
+  .kw-android-ui .cc-card-head { flex-wrap:wrap; }
+  .kw-android-ui .graph-card canvas { width:100%!important;height:auto!important; }
+  .kw-android-ui .table-responsive:has(#trackerBody) { display:none!important; }
+  .kw-android-ui #commandTrackerPager { display:none!important; }
+  .kw-android-ui .kw-mobile-mock-list { display:grid!important; }
+}
+@media(min-width:821px) {
+  .kw-mobile-mock-list { display:none!important; }
+}
+@media(max-width:390px) {
+  .kw-android-ui .kw-metric-grid,.kw-android-ui .cc-grid,.kw-android-ui .cc-analytics-grid { grid-template-columns:1fr 1fr!important; }
+  #kkAndroidBottomNav .kw-bnav-btn span { font-size:9px!important; }
+  #kkAndroidBottomNav .kw-bnav-btn i { font-size:18px!important; }
+}
+
+.kw-hidden-floating-settings-prompt{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+
+
+/* ===== V72 Android Full-Width, Charts, Toast, App List & Mock Card Fixes ===== */
+
+/* 1. Fix Toast Notification: hidden by default, centered & dismissible when .show */
+.toast {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: opacity .24s ease, transform .24s ease, visibility .24s ease !important;
+}
+.toast.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+.kw-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+.kw-toast-body span {
+  overflow-wrap: anywhere;
+}
+.kw-toast-close {
+  flex: 0 0 auto;
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  background: rgba(255,255,255,0.08) !important;
+  color: inherit !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 0.82rem !important;
+  cursor: pointer;
+}
+
+/* 2. App Classification Search & View All button */
+.kw-app-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.kw-app-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 13px !important;
+  border-radius: 13px !important;
+  border: 1px solid var(--kw-line) !important;
+  background: var(--kw-panel-strong) !important;
+  color: var(--kw-text) !important;
+  font-size: 0.84rem !important;
+  min-height: 42px !important;
+}
+.kw-app-count {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--kw-muted);
+  white-space: nowrap;
+}
+.kw-view-all-apps-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 14px !important;
+  text-align: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* 3. Clickable Mobile Mock Cards in Portrait Mode */
+.kw-mobile-mock-clickable {
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+  touch-action: manipulation;
+}
+.kw-mobile-mock-clickable:active {
+  transform: scale(0.985);
+  border-color: var(--kw-cyan) !important;
+}
+.kw-mobile-mock-tap-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--kw-cyan);
+}
+
+/* 4. Mobile Android Layout: Edge-to-Edge Cards, Fixed Header, Single-Column Analytics Graphs */
+@media (max-width: 820px) {
+  /* Edge-to-edge full-width cards (remove double side gutters) */
+  .main-content,
+  .kw-android-ui .main-content {
+    padding: calc(66px + env(safe-area-inset-top, 0px)) 6px calc(98px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .view-section,
+  .kw-android-ui .view-section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+  }
+  .kw-android-ui .view-section > *,
+  .kw-android-ui .glass-panel,
+  .kw-android-ui .kw-today-card,
+  .kw-android-ui .kw-section-card,
+  .kw-android-ui .kw-page-hero,
+  .kw-android-ui .kw-permission-card,
+  .kw-android-ui .cc-welcome {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 18px !important;
+  }
+
+  /* Keep top bar brand title crisp & visible on every tab */
+  #kkMobileTopBar {
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 10px 8px !important;
+  }
+  #kkMobileTopBar .kw-top-brand,
+  #kkMobileTopBar .kw-top-brand span {
+    color: var(--kw-text) !important;
+    -webkit-text-fill-color: var(--kw-text) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Bottom nav aligned with edge-to-edge cards */
+  #kkAndroidBottomNav {
+    left: 6px !important;
+    right: 6px !important;
+    bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 20px !important;
+  }
+
+  /* Fixed Toast positioning on Android (never stuck, never cut off left side) */
+  .toast {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateY(18px) !important;
+    width: auto !important;
+    max-width: none !important;
+    border-radius: 16px !important;
+    padding: 11px 14px !important;
+    background: var(--kw-panel-strong, rgba(20, 24, 34, 0.96)) !important;
+    color: var(--kw-text, #f5f2ec) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45) !important;
+    z-index: 10080 !important;
+  }
+  .toast.show {
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateY(0) !important;
+  }
+
+  /* Progress / Deep Analytics: Single-column full-width charts */
+  #view-analytics > .glass-panel:first-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+  #view-analytics > .glass-panel:first-child > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  #view-analytics > .glass-panel:first-child select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .charts-wrapper,
+  .kw-android-ui .charts-wrapper {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .charts-wrapper .chart-box,
+  .kw-android-ui .charts-wrapper .chart-box {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px 12px !important;
+    overflow: hidden !important;
+  }
+  .charts-wrapper .chart-box h3 {
+    font-size: 0.98rem !important;
+    margin-bottom: 12px !important;
+  }
+  .charts-wrapper .canvas-container,
+  .kw-android-ui .charts-wrapper .canvas-container {
+    position: relative !important;
+    width: 100% !important;
+    height: 265px !important;
+    min-height: 245px !important;
+  }
+  .charts-wrapper .chart-box canvas,
+  .kw-android-ui .charts-wrapper .chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Today Tab 7-Day Graph Cards: full-width with crisp height */
+  .kw-android-ui .cc-grid-bottom {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .kw-android-ui .cc-grid-bottom .graph-card {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    padding: 14px !important;
+  }
+  .kw-android-ui .cc-grid-bottom .graph-card canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 165px !important;
+    margin-top: 8px;
+  }
+
+  /* KPI grids in Analytics & Wellness */
+  .kw-android-ui .kpi-grid,
+  .kw-android-ui .lifetime-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .kw-android-ui .lifetime-detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
